@@ -13,7 +13,6 @@
 `include "register_interface/assign.svh"
 `include "register_interface/typedef.svh"
 
-
 module axi_cgra_top #(
     parameter int unsigned AXI_ID_WIDTH_MASTER  = -1,
     parameter int unsigned AXI_ID_WIDTH_SLAVE   = -1,
@@ -202,31 +201,6 @@ module axi_cgra_top #(
         // For stall cycle calculation
         .input_outst_fifo_full_o(counters_read_stall),
         .output_outst_fifo_full_o(counters_write_stall)
-    );
-
-
-      
-  
-
-
- 
-
-    // Alternative: mock_CGRA
-    CGRA cgra_i
-    (
-        .clk                ( clk_i ),
-        .rst_n              ( !(!rst_ni | clear_cgra_state) ), // Reset internal state
-        .clk_bs             ( clk_i ),
-        .rst_n_bs           ( !(!rst_ni | clear_cgra_config) ), // Reset configuration
-        .data_in            ( cgra_data_input_data   ),
-        .data_in_valid      ( cgra_data_input_valid  ),
-        .data_in_ready      ( cgra_data_input_ready  ),
-        .data_out           ( cgra_data_output_data  ),
-        .data_out_valid     ( cgra_data_output_valid ),
-        .data_out_ready     ( cgra_data_output_ready ),
-        .config_bitstream   ( configuration_word ),
-        .bitstream_enable_i ( 1'b1 ),
-        .execute_i          ( !done_exec )
     );
 
 endmodule

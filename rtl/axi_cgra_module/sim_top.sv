@@ -33,7 +33,6 @@ always_ff @(posedge clk_i) begin
             // slave[0].aw_addr <= 32'h5000_0050;
             // slave[0].w_data  <= 32'h0000_0001;
             
-            
             // slave[0].aw_size <= 3'b011;
             // slave[0].w_strb <= '1;
             // slave[0].w_last <= 1'b1;
@@ -48,7 +47,6 @@ always_ff @(posedge clk_i) begin
             // slave[0].aw_valid <= 0;
             // slave[0].w_valid <= 0;
             // end
-
 
             // 40: begin
 
@@ -66,7 +64,6 @@ always_ff @(posedge clk_i) begin
             // slave[0].aw_addr <= 32'h5000_0050;
             // slave[0].w_data  <= 32'h0000_0003;
             
-            
             // slave[0].aw_size <= 3'b011;
             // slave[0].w_strb <= '1;
             // slave[0].w_last <= 1'b1;
@@ -81,8 +78,6 @@ always_ff @(posedge clk_i) begin
             // slave[0].aw_valid <= 0;
             // slave[0].w_valid <= 0;
             // end
-
-
 
             // 40: begin
             // slave[0].aw_addr <= 32'h5000_0070;
@@ -108,17 +103,9 @@ always_ff @(posedge clk_i) begin
             // slave[0].w_valid <= 0;
             // end
 
-
-
-
-        
         1000: $finish;
     endcase
 end
-
-
-
-
 
 AXI_BUS #(
 .AXI_ADDR_WIDTH ( AxiAddrWidth     ),
@@ -127,14 +114,12 @@ AXI_BUS #(
 .AXI_USER_WIDTH ( AxiUserWidth     )
 ) axi_bus_interface();
 
-
 localparam NBSlave = 3; // debug, ariane + CGRA // MODIFIED: Increased from 2 to 3
 localparam AxiAddrWidth = 64;
 localparam AxiDataWidth = 64;
 localparam AxiIdWidthMaster = 4;
 localparam AxiIdWidthSlaves = AxiIdWidthMaster + $clog2(NBSlave); // 5
 localparam AxiUserWidth = 64; //ariane_pkg::AXI_USER_WIDTH;
-
 
 AXI_BUS #(
 .AXI_ADDR_WIDTH ( AxiAddrWidth     ),
@@ -182,7 +167,8 @@ localparam axi_pkg::xbar_cfg_t AXI_XBAR_CFG = '{
     UniqueIds:          1'b0,
     AxiAddrWidth:       AxiAddrWidth,
     AxiDataWidth:       AxiDataWidth,
-    NoAddrRules:        ariane_soc::NB_PERIPHERALS
+    NoAddrRules:        ariane_soc::NB_PERIPHERALS,
+    PipelineStages:     1'b1
 };
 
 axi_xbar_intf #(
@@ -200,7 +186,6 @@ axi_xbar_intf #(
 .default_mst_port_i    ( '0         )
 );
 
-
 /////////////////// MASTER SLAVE TEST ///////////////////////////
 axi_cgra_top #(
     .AXI_ID_WIDTH_MASTER   ( AxiIdWidthMaster ),
@@ -215,10 +200,6 @@ axi_cgra_top #(
     .axi_master_port        (slave[2])
 );
 
-
-
-
-
 ////////////// AXI to memory ///////////////
 
 logic ram_req = '0;
@@ -227,7 +208,6 @@ logic [7:0] ram_be = '0;
 logic [63:0] ram_addr = '0;
 logic [63:0] ram_rdata;
 logic [63:0] ram_wdata = '0;
-
 
 axi2mem #(
 .AXI_ID_WIDTH   ( AxiIdWidthSlaves ),
@@ -243,9 +223,7 @@ axi2mem #(
     .addr_o ( ram_addr                ),
     .be_o   ( ram_be                  ),
     .data_o ( ram_wdata               ),
-    .data_i ( ram_rdata               ),
-    .user_i (                         ),
-    .user_o (                         )
+    .data_i ( ram_rdata               )
 );
 
 test_ram_64 i_test_ram(
