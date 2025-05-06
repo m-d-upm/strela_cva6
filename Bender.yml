@@ -17,7 +17,7 @@
 # Description: STRELA with CVA6 integration support Bender package descriptor.
 
 package:
-  name: strela-cva6
+  name: strela_cva6
   authors:
     - "Juan Granja <juan.granja@upm.es>"
 
