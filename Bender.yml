@@ -30,9 +30,9 @@ dependencies:
 export_include_dirs:
 
 sources:
-  - rtl/axi_cgra_top.sv
-  - rtl/axi_slave_to_reg_adapter.sv
-  - rtl/control_unit.sv
-  - rtl/deserializer.sv
-  - rtl/dma_config_csr.sv
-  - rtl/dma_interface.sv
+  - rtl/axi_cgra_module/axi_cgra_top.sv
+  - rtl/axi_cgra_module/axi_slave_to_reg_adapter.sv
+  - rtl/axi_cgra_module/control_unit.sv
+  - rtl/axi_cgra_module/deserializer.sv
+  - rtl/axi_cgra_module/dma_config_csr.sv
+  - rtl/axi_cgra_module/dma_interface.sv
