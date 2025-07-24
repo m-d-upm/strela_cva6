@@ -63,12 +63,12 @@ module dma_interface #(
     output  logic output_outst_fifo_full_o
 );
 
-    localparam INPUT_MAX_OUTSTANDING = 10;
-    localparam OUTPUT_MAX_OUTSTANDING = 4;
-    localparam INPUT_FIFO_DEPTH = 9; // Problem with powers of two because fifo_v3's usage overflows to zero when full
-    localparam OUTPUT_FIFO_DEPTH = 9; // See https://github.com/pulp-platform/common_cells/issues/69 ...
+    localparam INPUT_MAX_OUTSTANDING = 24;
+    localparam OUTPUT_MAX_OUTSTANDING = 24;
+    localparam INPUT_FIFO_DEPTH = 33; // Problem with powers of two because fifo_v3's usage overflows to zero when full
+    localparam OUTPUT_FIFO_DEPTH = 33; // See https://github.com/pulp-platform/common_cells/issues/69 ...
 
-    localparam CONFIG_INDEX = INPUT_NODES_NUM-1 +1;
+    localparam CONFIG_INDEX = INPUT_NODES_NUM -1 + 1;
 
     typedef struct packed
     {
