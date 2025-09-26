@@ -23,7 +23,8 @@ module axi_cgra_top #(
     input   logic       clk_i,
     input   logic       rst_ni,
     AXI_BUS.Slave       axi_slave_port,
-    AXI_BUS.Master      axi_master_port
+    AXI_BUS.Master      axi_master_port,
+    output  logic[1:0]  int_lines // two - one to signal exec done, other to signal config loading done
 );
 
     localparam INPUT_NODES_NUM = 4;
@@ -86,6 +87,7 @@ module axi_cgra_top #(
 
     logic output_arbiter_hold;
 
+    logic [1:0] clear_interrupt_lines;
 
     dma_config_csr #(
         .reg_req_t      ( regbus_req_t      ),
@@ -118,7 +120,8 @@ module axi_cgra_top #(
         .clear_cgra_state_o           ( clear_cgra_state ),
 
         .reset_state_machines_o ( reset_state_machines  ),
-        .output_arbiter_hold_o   ( output_arbiter_hold )
+        .output_arbiter_hold_o   ( output_arbiter_hold ),
+        .clear_interrupt_lines_o ( clear_interrupt_lines )
     );
 
 
@@ -218,6 +221,16 @@ module axi_cgra_top #(
         .config_bitstream   ( configuration_word ),
         .bitstream_enable_i ( 1'b1 ),
         .execute_i          ( !done_exec )
+    );
+
+    interrupt_controller int_ctrl
+    (
+        .clk                ( clk_i ),
+        .rst_n              ( rst_ni ), 
+        .done_config_i      ( done_config ),
+        .done_exec_i        ( done_exec ),
+        .clear_int_lines_i  ( clear_interrupt_lines ),
+        .int_lines_o        ( int_lines )
     );
 
 endmodule

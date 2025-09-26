@@ -39,8 +39,8 @@ module dma_config_csr #(
     // Test debug:
     output logic reset_state_machines_o,
 
-    output logic output_arbiter_hold_o
-
+    output logic output_arbiter_hold_o,
+    output logic [1:0] clear_interrupt_lines_o
 );
 
 // Register interface signals
@@ -147,6 +147,7 @@ module dma_config_csr #(
 
             output_arbiter_hold_o <= 1'b0;
 
+            clear_interrupt_lines_o <= '0;
 
         end else begin
             if(reg_we) begin
@@ -159,7 +160,7 @@ module dma_config_csr #(
                 8'hF8: reset_state_machines_o <= reg_write_data;
 
                 // Control/status
-                8'h00: {clear_cgra_config_o, load_configuration_o, clear_cgra_state_o, start_execution_o} <= reg_write_data[3:0];
+                8'h00: {clear_interrupt_lines_o[1], clear_interrupt_lines_o[0], clear_cgra_config_o, load_configuration_o, clear_cgra_state_o, start_execution_o} <= reg_write_data[5:0];
 
 
                 // Config:
@@ -203,6 +204,7 @@ module dma_config_csr #(
                 clear_cgra_config_o <= 0;
                 clear_cgra_state_o <= 0;
                 reset_state_machines_o <= 0;
+                clear_interrupt_lines_o <= '0;
             end
         end
     end
