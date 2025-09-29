@@ -187,6 +187,9 @@ axi_xbar_intf #(
 );
 
 /////////////////// MASTER SLAVE TEST ///////////////////////////
+
+logic[1:0] int_lines;
+
 axi_cgra_top #(
     .AXI_ID_WIDTH_MASTER   ( AxiIdWidthMaster ),
     .AXI_ID_WIDTH_SLAVE    ( AxiIdWidthSlaves ),
@@ -197,7 +200,8 @@ axi_cgra_top #(
     .clk_i                  ( clk_i      ), // clk
     .rst_ni                 ( rst_ni     ), // ndmreset_n 
     .axi_slave_port         (master[ariane_soc::Accelerator]),
-    .axi_master_port        (slave[2])
+    .axi_master_port        (slave[2]),
+    .int_lines              ( int_lines )
 );
 
 ////////////// AXI to memory ///////////////
