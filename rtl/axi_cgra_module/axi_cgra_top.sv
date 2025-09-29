@@ -24,7 +24,7 @@ module axi_cgra_top #(
     input   logic       rst_ni,
     AXI_BUS.Slave       axi_slave_port,
     AXI_BUS.Master      axi_master_port,
-    output  logic[1:0]  int_lines // two - one to signal exec done, other to signal config loading done
+    output  logic[1:0]  int_lines // two - one to signal exec done index [1], other to signal config loading done index [0]
 );
 
     localparam INPUT_NODES_NUM = 4;

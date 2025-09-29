@@ -12,6 +12,61 @@ module interrupt_controller (
     input  logic [1:0]  clear_int_lines_i,
     output logic [1:0]  int_lines_o
 ); 
+
+    logic int_config;
+    logic int_exec;
+
+    logic started_exec;
+    logic started_config;
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (~rst_ni) begin
+            int_lines_o <= '0;
+            started_config <= 1'b0;
+            started_exec <= 1'b0;
+        end else begin
+            if (start_config_csr_i) begin
+                started_config <= 1'b1;
+            end
+
+            if (start_exec_csr_i) begin
+                started_exec <= 1'b1;
+            end
+
+            if (clear_int_lines_i[0]) begin
+                int_lines_o[0] <= 1'b0;
+            end else begin
+                if (int_config) begin
+                    int_lines_o[0] <= 1'b1;
+                end
+            end
+
+            if (clear_int_lines_i[1]) begin
+                int_lines_o[1] <= 1'b0;
+            end else begin
+                if (int_exec) begin
+                    int_lines_o[1] <= 1'b1;
+                end
+            end
+        end
+    end
+
+    always_comb begin
+       if (started_config && done_config_i) begin
+           int_config = 1'b1; 
+       end else begin
+           int_config = 1'b0;
+       end
+
+       if (started_exec && done_exec_i) begin
+           int_exec = 1'b1; 
+       end else begin
+           int_exec = 1'b0;
+       end
+    
+    end
+
+/*
     cgra_intr_fsm intr_ctrl_config
     (
         .clk_i                      ( clk_i ),
@@ -31,6 +86,7 @@ module interrupt_controller (
         .clear_intr_line            ( clear_int_lines_i[1] ),
         .int_line_o                 ( int_lines_o[1] )
     );
+*/
 
 endmodule
 
