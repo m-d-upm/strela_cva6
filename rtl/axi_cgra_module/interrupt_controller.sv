@@ -35,6 +35,7 @@ module interrupt_controller (
 
             if (clear_int_lines_i[0]) begin
                 int_lines_o[0] <= 1'b0;
+                started_config <= 1'b0;
             end else begin
                 if (int_config) begin
                     int_lines_o[0] <= 1'b1;
@@ -43,6 +44,7 @@ module interrupt_controller (
 
             if (clear_int_lines_i[1]) begin
                 int_lines_o[1] <= 1'b0;
+                started_exec <= 1'b0;
             end else begin
                 if (int_exec) begin
                     int_lines_o[1] <= 1'b1;
