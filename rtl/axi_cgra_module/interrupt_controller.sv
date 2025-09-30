@@ -22,12 +22,17 @@ module interrupt_controller (
                 started_event <= 1'b1;
             end
 
-            if (int_occured) begin
+            if (started_event && event_done_i) begin
                 int_line_o <= 1'b1;
             end
+
+            //if (int_occured) begin
+            //    int_line_o <= 1'b1;
+            //end
         end
     end
 
+    /*
     always_comb begin
        if (started_event && event_done_i) begin
            int_occured = 1'b1; 
@@ -35,6 +40,7 @@ module interrupt_controller (
            int_occured = 1'b0;
        end
     end
+    */
 
 /*
     cgra_intr_fsm intr_ctrl_config
