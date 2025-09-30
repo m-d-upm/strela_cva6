@@ -5,35 +5,67 @@
 module interrupt_controller (
     input  logic        clk_i,
     input  logic        rst_ni,
-    input  logic        event_started_i,
-    input  logic        event_done_i,
-    output logic        int_line_o
+    input  logic        start_config_csr_i,
+    input  logic        start_exec_csr_i,
+    input  logic        done_config_i,
+    input  logic        done_exec_i,
+    input  logic [1:0]  clear_int_lines_i,
+    output logic [1:0]  int_lines_o
 ); 
 
-    logic int_occured;
-    logic started_event;
+    logic int_config;
+    logic int_exec;
+
+    logic started_exec;
+    logic started_config;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (~rst_ni) begin
-            int_line_o <= 1'b0;
-            started_event <= 1'b0;
+            int_lines_o <= '0;
+            started_config <= 1'b0;
+            started_exec <= 1'b0;
         end else begin
-            if (event_started_i) begin
-                started_event <= 1'b1;
+            if (start_config_csr_i) begin
+                started_config <= 1'b1;
             end
 
-            if (int_occured) begin
-                int_line_o <= 1'b1;
+            if (start_exec_csr_i) begin
+                started_exec <= 1'b1;
+            end
+
+            if (clear_int_lines_i[0]) begin
+                int_lines_o[0] <= 1'b0;
+                started_config <= 1'b0;
+            end else begin
+                if (int_config) begin
+                    int_lines_o[0] <= 1'b1;
+                end
+            end
+
+            if (clear_int_lines_i[1]) begin
+                int_lines_o[1] <= 1'b0;
+                started_exec <= 1'b0;
+            end else begin
+                if (int_exec) begin
+                    int_lines_o[1] <= 1'b1;
+                end
             end
         end
     end
 
     always_comb begin
-       if (started_event && event_done_i) begin
-           int_occured = 1'b1; 
+       if (started_config && done_config_i) begin
+           int_config = 1'b1; 
        end else begin
-           int_occured = 1'b0;
+           int_config = 1'b0;
        end
+
+       if (started_exec && done_exec_i) begin
+           int_exec = 1'b1; 
+       end else begin
+           int_exec = 1'b0;
+       end
+    
     end
 
 /*
