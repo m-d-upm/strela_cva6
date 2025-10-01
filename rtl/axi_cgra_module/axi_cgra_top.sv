@@ -88,6 +88,7 @@ module axi_cgra_top #(
     logic output_arbiter_hold;
 
     logic [1:0] clear_interrupt_lines;
+    logic [1:0] interrupt_lines;
 
     dma_config_csr #(
         .reg_req_t      ( regbus_req_t      ),
@@ -121,7 +122,8 @@ module axi_cgra_top #(
 
         .reset_state_machines_o ( reset_state_machines  ),
         .output_arbiter_hold_o   ( output_arbiter_hold ),
-        .clear_interrupt_lines_o ( clear_interrupt_lines )
+        .clear_interrupt_lines_o ( clear_interrupt_lines ),
+        .pending_interrupts_i    ( interrupt_lines )
     );
 
 
@@ -243,7 +245,7 @@ module axi_cgra_top #(
         .rst_ni             ( !(!rst_ni | clear_interrupt_lines[0]) ), 
         .event_started_i    ( csr_load_config ),
         .event_done_i       ( done_config ),
-        .int_line_o         ( int_lines[0] )
+        .int_line_o         ( interrupt_lines[0] )
     );
 
     interrupt_controller int_ctrl_exec
@@ -252,7 +254,9 @@ module axi_cgra_top #(
         .rst_ni             ( !(!rst_ni | clear_interrupt_lines[1]) ), 
         .event_started_i    ( csr_execute_input_output ),
         .event_done_i       ( done_exec ),
-        .int_line_o         ( int_lines[1] )
+        .int_line_o         ( interrupt_lines[1] )
     );
+
+    assign int_lines = interrupt_lines;
 
 endmodule

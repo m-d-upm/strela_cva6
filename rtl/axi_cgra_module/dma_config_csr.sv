@@ -40,7 +40,8 @@ module dma_config_csr #(
     output logic reset_state_machines_o,
 
     output logic output_arbiter_hold_o,
-    output logic [1:0] clear_interrupt_lines_o
+    output logic [1:0] clear_interrupt_lines_o,
+    input  logic [1:0] pending_interrupts_i
 );
 
 // Register interface signals
@@ -86,7 +87,7 @@ module dma_config_csr #(
             8'hF8: reg_read_data = op_a + op_b;
 
             // Control/status
-            8'h00: reg_read_data = {done_config_i, done_exec_output_i};
+            8'h00: reg_read_data = { pending_interrupts_i[1], pending_interrupts_i[0], done_config_i, done_exec_output_i};
 
             // Config
             8'h04: reg_read_data = data_config_addr_o;  
