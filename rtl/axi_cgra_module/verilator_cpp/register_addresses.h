@@ -6,7 +6,10 @@
     #define CGRA_CTRL_BIT_LOAD_CONFIG 0x4
     #define CGRA_CTRL_BIT_DONE_CONFIG 0x2
     #define CGRA_CTRL_BIT_DONE_EXEC   0x1
-
+    #define STRELA_CTRL_BIT_CLEAR_STATE   	    0x2
+    #define STRELA_CTRL_BIT_CLEAR_CONFIG	    0x8
+    #define STRELA_CTRL_BIT_CLEAR_INT_CONFIG    0x10
+    #define STRELA_CTRL_BIT_CLEAR_INT_EXEC	    0x20
 
 #define CGRA_CONF_ADDR_A	0x04
 #define CGRA_CONF_SIZE_A	0x08
@@ -32,4 +35,7 @@
 #define CGRA_CNTR_CONF_A     0x90
 #define CGRA_CNTR_EXEC_A     0x94
 #define CGRA_CNTR_STALL_A    0x98
+
+#define CGRA_RESET_DMA_A     0xF8
+
 

@@ -140,10 +140,26 @@ int main(int argc, char** argv, char** env) {
 
         if(sim_time == 10)
         {
+            write_reg_eval(dut, m_trace, CGRA_CTRL_A, STRELA_CTRL_BIT_CLEAR_STATE);
+            write_reg_eval(dut, m_trace, CGRA_CTRL_A, STRELA_CTRL_BIT_CLEAR_CONFIG);
+        }
+
+        if(sim_time == 20)
+        {
+            write_reg_eval(dut, m_trace, CGRA_RESET_DMA_A, 1);
+        }
+
+        if(sim_time == 30)
+        {
             // Load configuration
             write_reg_eval(dut, m_trace, CGRA_CONF_ADDR_A, CONFIG_ADDR);
             write_reg_eval(dut, m_trace, CGRA_CONF_SIZE_A, cgra_kernel_size*4);
             write_reg_eval(dut, m_trace, CGRA_CTRL_A, CGRA_CTRL_BIT_LOAD_CONFIG);
+        }
+
+        if(sim_time == 400)
+        {
+            write_reg_eval(dut, m_trace, CGRA_CTRL_A, STRELA_CTRL_BIT_CLEAR_INT_CONFIG);
         }
 
         // Start exec
@@ -224,6 +240,10 @@ int main(int argc, char** argv, char** env) {
         //     write_reg_eval(dut, m_trace, CGRA_CTRL_A, CGRA_CTRL_BIT_START_EXEC);
         // }
 
+        if(sim_time == 1500)
+        {
+            write_reg_eval(dut, m_trace, CGRA_CTRL_A, STRELA_CTRL_BIT_CLEAR_INT_EXEC);
+        }
     }
 
 
