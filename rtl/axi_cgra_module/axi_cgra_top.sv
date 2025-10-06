@@ -225,20 +225,6 @@ module axi_cgra_top #(
         .execute_i          ( !done_exec )
     );
 
-    /*
-    interrupt_controller int_ctrl
-    (
-        .clk_i              ( clk_i ),
-        .rst_ni             ( rst_ni ), 
-        .start_config_csr_i ( csr_load_config ),
-        .start_exec_csr_i   ( csr_execute_input_output ),
-        .done_config_i      ( done_config ),
-        .done_exec_i        ( done_exec ),
-        .clear_int_lines_i  ( clear_interrupt_lines ),
-        .int_lines_o        ( int_lines )
-    );
-    */
-
     interrupt_controller int_ctrl_conf
     (
         .clk_i              ( clk_i ),
