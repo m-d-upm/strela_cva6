@@ -1,0 +1,3 @@
+[submodule "rtl/strela"]
+	path = rtl/strela
+	url = https://github.com/m-d-upm/strela.git
