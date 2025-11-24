@@ -68,11 +68,11 @@ module dma_interface #(
     localparam INPUT_FIFO_DEPTH = 33; // Problem with powers of two because fifo_v3's usage overflows to zero when full
     localparam OUTPUT_FIFO_DEPTH = 33; // See https://github.com/pulp-platform/common_cells/issues/69 ...
 
-    localparam CONFIG_INDEX = INPUT_NODES_NUM -1 + 1;
+    localparam CONFIG_INDEX = INPUT_NODES_NUM;
 
     typedef struct packed
     {
-        logic [INPUT_NODES_NUM-1 +1:0] pe_one_hot; // MSB is for config
+        logic [INPUT_NODES_NUM:0] pe_one_hot; // MSB is for config
         logic odd_not_even_word;
     } trans_info_t;
 
@@ -101,15 +101,15 @@ module dma_interface #(
     logic data_config_execute_d, data_config_execute_q;
 
     // Data input address calculation
-    logic [31:0] data_input_addr_offs_d [INPUT_NODES_NUM-1 +1:0]; // TODO: This can be less than 32 bits
-    logic [31:0] data_input_addr_offs_q [INPUT_NODES_NUM-1 +1:0]; // MSW is for config (+1)
+    logic [31:0] data_input_addr_offs_d [INPUT_NODES_NUM:0]; // TODO: This can be less than 32 bits
+    logic [31:0] data_input_addr_offs_q [INPUT_NODES_NUM:0]; // MSW is for config (+1)
 
     logic [31:0] axi_read_adress_d, axi_read_adress_q;
 
     // Data input arbitration
-    logic [INPUT_NODES_NUM-1 +1:0] data_input_arb_request;      // MSB is for config (+1)
+    logic [INPUT_NODES_NUM:0] data_input_arb_request;      // MSB is for config (+1)
     logic data_input_arb_enable;
-    logic [INPUT_NODES_NUM-1 +1:0] data_input_arb_grant_one_hot;// MSB is for config (+1)
+    logic [INPUT_NODES_NUM:0] data_input_arb_grant_one_hot;// MSB is for config (+1)
 
     // AXI address read
     logic ar_master_free;
@@ -169,7 +169,7 @@ module dma_interface #(
     end
 
 
-    logic [OUTPUT_NODES_NUM-1 +1:0] data_input_address_under_size;
+    logic [OUTPUT_NODES_NUM:0] data_input_address_under_size;
 
     // Address comparators
     always_comb begin
