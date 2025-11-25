@@ -231,19 +231,105 @@ module sim_top (
   /////////////////// MASTER SLAVE TEST ///////////////////////////
 
   logic [1:0] int_lines;
+  logic int_shared;
+
+
+   // APB bus signals
+   logic         apb_penable;
+   logic         apb_pwrite;
+   logic [31:0]  apb_paddr;
+   logic         apb_psel;
+   logic [31:0]  apb_pwdata;
+   logic [31:0]  apb_prdata;
+   logic         apb_pready;
+   logic         apb_pslverr;
+
+   axi2apb_64_32 #(
+       .AXI4_ADDRESS_WIDTH ( AxiAddrWidth ),
+       .AXI4_RDATA_WIDTH   ( AxiDataWidth ),
+       .AXI4_WDATA_WIDTH   ( AxiDataWidth ),
+       .AXI4_ID_WIDTH      ( AxiIdWidthSlaves   ),
+       .AXI4_USER_WIDTH    ( AxiUserWidth ),
+       .BUFF_DEPTH_SLAVE   ( 2              ),
+       .APB_ADDR_WIDTH     ( 32             )
+   ) i_axi2apb_64_32_accelerator (
+       .ACLK      ( clk_i          ),
+       .ARESETn   ( rst_ni         ),
+       .test_en_i ( 1'b0           ),
+       .AWID_i    ( master[ariane_soc::Accelerator].aw_id     ),
+       .AWADDR_i  ( master[ariane_soc::Accelerator].aw_addr   ),
+       .AWLEN_i   ( master[ariane_soc::Accelerator].aw_len    ),
+       .AWSIZE_i  ( master[ariane_soc::Accelerator].aw_size   ),
+       .AWBURST_i ( master[ariane_soc::Accelerator].aw_burst  ),
+       .AWLOCK_i  ( master[ariane_soc::Accelerator].aw_lock   ),
+       .AWCACHE_i ( master[ariane_soc::Accelerator].aw_cache  ),
+       .AWPROT_i  ( master[ariane_soc::Accelerator].aw_prot   ),
+       .AWREGION_i( master[ariane_soc::Accelerator].aw_region ),
+       .AWUSER_i  ( master[ariane_soc::Accelerator].aw_user   ),
+       .AWQOS_i   ( master[ariane_soc::Accelerator].aw_qos    ),
+       .AWVALID_i ( master[ariane_soc::Accelerator].aw_valid  ),
+       .AWREADY_o ( master[ariane_soc::Accelerator].aw_ready  ),
+       .WDATA_i   ( master[ariane_soc::Accelerator].w_data    ),
+       .WSTRB_i   ( master[ariane_soc::Accelerator].w_strb    ),
+       .WLAST_i   ( master[ariane_soc::Accelerator].w_last    ),
+       .WUSER_i   ( master[ariane_soc::Accelerator].w_user    ),
+       .WVALID_i  ( master[ariane_soc::Accelerator].w_valid   ),
+       .WREADY_o  ( master[ariane_soc::Accelerator].w_ready   ),
+       .BID_o     ( master[ariane_soc::Accelerator].b_id      ),
+       .BRESP_o   ( master[ariane_soc::Accelerator].b_resp    ),
+       .BVALID_o  ( master[ariane_soc::Accelerator].b_valid   ),
+       .BUSER_o   ( master[ariane_soc::Accelerator].b_user    ),
+       .BREADY_i  ( master[ariane_soc::Accelerator].b_ready   ),
+       .ARID_i    ( master[ariane_soc::Accelerator].ar_id     ),
+       .ARADDR_i  ( master[ariane_soc::Accelerator].ar_addr   ),
+       .ARLEN_i   ( master[ariane_soc::Accelerator].ar_len    ),
+       .ARSIZE_i  ( master[ariane_soc::Accelerator].ar_size   ),
+       .ARBURST_i ( master[ariane_soc::Accelerator].ar_burst  ),
+       .ARLOCK_i  ( master[ariane_soc::Accelerator].ar_lock   ),
+       .ARCACHE_i ( master[ariane_soc::Accelerator].ar_cache  ),
+       .ARPROT_i  ( master[ariane_soc::Accelerator].ar_prot   ),
+       .ARREGION_i( master[ariane_soc::Accelerator].ar_region ),
+       .ARUSER_i  ( master[ariane_soc::Accelerator].ar_user   ),
+       .ARQOS_i   ( master[ariane_soc::Accelerator].ar_qos    ),
+       .ARVALID_i ( master[ariane_soc::Accelerator].ar_valid  ),
+       .ARREADY_o ( master[ariane_soc::Accelerator].ar_ready  ),
+       .RID_o     ( master[ariane_soc::Accelerator].r_id      ),
+       .RDATA_o   ( master[ariane_soc::Accelerator].r_data    ),
+       .RRESP_o   ( master[ariane_soc::Accelerator].r_resp    ),
+       .RLAST_o   ( master[ariane_soc::Accelerator].r_last    ),
+       .RUSER_o   ( master[ariane_soc::Accelerator].r_user    ),
+       .RVALID_o  ( master[ariane_soc::Accelerator].r_valid   ),
+       .RREADY_i  ( master[ariane_soc::Accelerator].r_ready   ),
+       .PENABLE   ( apb_penable   ),
+       .PWRITE    ( apb_pwrite    ),
+       .PADDR     ( apb_paddr     ),
+       .PSEL      ( apb_psel      ),
+       .PWDATA    ( apb_pwdata    ),
+       .PRDATA    ( apb_prdata    ),
+       .PREADY    ( apb_pready    ),
+       .PSLVERR   ( apb_pslverr   )
+   );
 
   axi_cgra_top #(
       .AXI_ID_WIDTH_MASTER(AxiIdWidthMaster),
-      .AXI_ID_WIDTH_SLAVE (AxiIdWidthSlaves),
+      //.AXI_ID_WIDTH_SLAVE (AxiIdWidthSlaves),
       .AXI_ADDR_WIDTH     (AxiAddrWidth),
       .AXI_DATA_WIDTH     (AxiDataWidth),
       .AXI_USER_WIDTH     (AxiUserWidth)
   ) i_axi_cgra_top (
       .clk_i          (clk_i),                            // clk
       .rst_ni         (rst_ni),                           // ndmreset_n 
-      .axi_slave_port (master[ariane_soc::Accelerator]),
       .axi_master_port(slave[2]),
-      .int_lines      (int_lines)
+      .apb_reg_bus_penable(apb_penable),
+      .apb_reg_bus_pwrite(apb_pwrite),
+      .apb_reg_bus_paddr(apb_paddr),
+      .apb_reg_bus_psel(apb_psel),
+      .apb_reg_bus_pwdata(apb_pwdata),
+      .apb_reg_bus_prdata(apb_prdata),
+      .apb_reg_bus_pready(apb_pready),
+      .apb_reg_bus_pslverr(apb_pslverr),
+      .int_lines(int_lines),
+      .int_line_shared(int_shared)
   );
 
   ////////////// AXI to memory ///////////////

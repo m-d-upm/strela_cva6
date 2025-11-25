@@ -17,6 +17,8 @@
 
 // To access registers
 #include "Vsim_top_axi_cgra_top__pi1.h"
+#include "Vsim_top_axi_cgra_top__pi2.h"
+
 #include "Vsim_top_dma_config_csr__Tz19_TBz20.h"
 
 // Register addresses

@@ -15,16 +15,23 @@
 
 module axi_cgra_top #(
     parameter int unsigned AXI_ID_WIDTH_MASTER = -1,
-    parameter int unsigned AXI_ID_WIDTH_SLAVE  = -1,
     parameter int unsigned AXI_ADDR_WIDTH      = -1,
     parameter int unsigned AXI_DATA_WIDTH      = -1,
     parameter int unsigned AXI_USER_WIDTH      = -1
 ) (
     input logic clk_i,
     input logic rst_ni,
-    AXI_BUS.Slave axi_slave_port,
     AXI_BUS.Master axi_master_port,
-    output  logic[1:0]  int_lines // two - one to signal exec done index [1], other to signal config loading done index [0]
+    input logic apb_reg_bus_penable,
+    input logic apb_reg_bus_pwrite,
+    input logic [31:0] apb_reg_bus_paddr,
+    input logic apb_reg_bus_psel,
+    input logic [31:0] apb_reg_bus_pwdata,
+    output logic [31:0] apb_reg_bus_prdata,
+    output logic apb_reg_bus_pready,
+    output logic apb_reg_bus_pslverr,
+    output logic[1:0]  int_lines, // two - one to signal exec done index [1], other to signal config loading done index [0]
+    output logic int_line_shared // shared IRQ, combined int_lines from above, ok to be shared since config and exec operations cannot be executed in parallel
 );
 
   localparam INPUT_NODES_NUM = 4;
@@ -40,23 +47,23 @@ module axi_cgra_top #(
       .AXI_DATA_WIDTH(AXI_DATA_WIDTH)
   ) axi_lite_bus ();
 
-
-  axi_slave_to_reg_adapter #(
-      .AXI_ID_WIDTH_MASTER(AXI_ID_WIDTH_MASTER),
-      .AXI_ID_WIDTH_SLAVE (AXI_ID_WIDTH_SLAVE),
-      .AXI_ADDR_WIDTH     (AXI_ADDR_WIDTH),
-      .AXI_DATA_WIDTH     (AXI_DATA_WIDTH),
-      .AXI_USER_WIDTH     (AXI_USER_WIDTH),
-      .regbus_req_t       (regbus_req_t),
-      .regbus_rsp_t       (regbus_rsp_t)
-  ) i_axi_slave_to_reg_adapter (
-      .clk_i         (clk_i),
-      .rst_ni        (rst_ni),
-      .axi_slave_port(axi_slave_port),
-      .regbus_req_o  (regbus_req),
-      .regbus_rsp_i  (regbus_rsp)
+  apb_to_reg_adapter #(
+      .regbus_req_t(regbus_req_t),
+      .regbus_rsp_t(regbus_rsp_t)
+  ) i_apb_to_reg_adapter (
+      .clk_i       (clk_i),
+      .rst_ni      (rst_ni),
+      .apb_penable (apb_reg_bus_penable),
+      .apb_pwrite  (apb_reg_bus_pwrite),
+      .apb_paddr   (apb_reg_bus_paddr),
+      .apb_psel    (apb_reg_bus_psel),
+      .apb_pwdata  (apb_reg_bus_pwdata),
+      .apb_prdata  (apb_reg_bus_prdata),
+      .apb_pready  (apb_reg_bus_pready),
+      .apb_pslverr (apb_reg_bus_pslverr),
+      .regbus_req_o(regbus_req),
+      .regbus_rsp_i(regbus_rsp)
   );
-
 
   axi_lite_to_axi_intf #(
       .AXI_DATA_WIDTH(64)
@@ -67,9 +74,9 @@ module axi_cgra_top #(
       .out           (axi_master_port)
   );
 
-  logic [31:0] data_input_addr  [INPUT_NODES_NUM-1:0];
-  logic [15:0] data_input_size  [INPUT_NODES_NUM-1:0];
-  logic [15:0] data_input_stride[INPUT_NODES_NUM-1:0];
+  logic [31:0] data_input_addr  [ INPUT_NODES_NUM-1:0];
+  logic [15:0] data_input_size  [ INPUT_NODES_NUM-1:0];
+  logic [15:0] data_input_stride[ INPUT_NODES_NUM-1:0];
 
   logic [31:0] data_config_addr;
   logic [15:0] data_config_size;
@@ -89,6 +96,7 @@ module axi_cgra_top #(
 
   logic [1:0] clear_interrupt_lines;
   logic [1:0] interrupt_lines;
+  logic interrupt_line_shared;
 
   dma_config_csr #(
       .reg_req_t(regbus_req_t),
@@ -240,6 +248,9 @@ module axi_cgra_top #(
       .int_line_o     (interrupt_lines[1])
   );
 
+  assign interrupt_line_shared = interrupt_lines[0] | interrupt_lines[1];
+
   assign int_lines = interrupt_lines;
+  assign int_line_shared = interrupt_line_shared;
 
 endmodule
