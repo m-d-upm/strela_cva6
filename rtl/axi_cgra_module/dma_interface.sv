@@ -83,10 +83,11 @@ module dma_interface #(
     // aw_ready      w_ready                   ar_ready     r_ready
 
     // Constant AXI signals
-    assign axi_master_port.aw_prot = '0;    // Unpriviledged access
+    //assign axi_master_port.aw_prot = '0;    // Unpriviledged access
     assign axi_master_port.b_ready = 1'b1;  // No error checking on write response
-    assign axi_master_port.ar_prot = '0;    // Unpriviledged access
-
+    //assign axi_master_port.ar_prot = '0;    // Unpriviledged access
+    // NOTE: AXI prot lines above commented out because the older AXI version of CVA6 in ESP platform does not have this signas defined for AXI Lite
+    // if/when it gets updated this can be reverted 
 
     /*********************************************
     *            INPUT DATA & CONFIG             *

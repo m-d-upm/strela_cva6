@@ -1,5 +1,7 @@
 // An adapter between an AXI Slave and Register Interface
 
+`include "register_interface/assign.svh"
+
 module apb_to_reg_adapter #(
     parameter type regbus_req_t = logic,
     parameter type regbus_rsp_t = logic
