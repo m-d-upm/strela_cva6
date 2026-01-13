@@ -2,7 +2,7 @@
 // Directs signals from CSRs to command
 // DMA interface and CGRA operation
 
-module countrol_unit (
+module control_unit (
     // Clock and reset
     input logic clk_i,
     input logic rst_ni,

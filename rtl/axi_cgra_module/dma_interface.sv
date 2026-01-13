@@ -18,6 +18,7 @@
 // See axi_mem_if/src/axi2mem.sv for example use of AXI_BUS interface (as a slave that is)
 
 module dma_interface #(
+    parameter int unsigned DATA_WIDTH = 32,
     parameter int unsigned INPUT_NODES_NUM = 4,
     parameter int unsigned OUTPUT_NODES_NUM = 4
 ) (
@@ -31,7 +32,7 @@ module dma_interface #(
     input   logic execute_config_i,
 
     // CGRA input data signals
-    output  logic [32*INPUT_NODES_NUM-1:0] data_input_o,
+    output  logic [DATA_WIDTH*INPUT_NODES_NUM-1:0] data_input_o,
     output  logic [INPUT_NODES_NUM-1:0] data_input_valid_o,
     input   logic [INPUT_NODES_NUM-1:0] data_input_ready_i,
 
@@ -48,7 +49,7 @@ module dma_interface #(
     output  logic data_config_done_o,
 
     // CGRA output data signals
-    input   logic [32*OUTPUT_NODES_NUM-1:0] data_output_i,
+    input   logic [DATA_WIDTH*OUTPUT_NODES_NUM-1:0] data_output_i,
     input   logic [OUTPUT_NODES_NUM-1:0] data_output_valid_i,
     output  logic [OUTPUT_NODES_NUM-1:0] data_output_ready_o,
 
@@ -62,7 +63,7 @@ module dma_interface #(
     output  logic input_outst_fifo_full_o,
     output  logic output_outst_fifo_full_o
 );
-
+    localparam int unsigned DATA_STRIDE = DATA_WIDTH / 8; // determine how many bytes there are in one data element
     localparam INPUT_MAX_OUTSTANDING = 24;
     localparam OUTPUT_MAX_OUTSTANDING = 24;
     localparam INPUT_FIFO_DEPTH = 33; // Problem with powers of two because fifo_v3's usage overflows to zero when full
@@ -73,7 +74,6 @@ module dma_interface #(
     typedef struct packed
     {
         logic [INPUT_NODES_NUM:0] pe_one_hot; // MSB is for config
-        logic odd_not_even_word;
     } trans_info_t;
 
     // AXI Lite signals:
@@ -86,7 +86,7 @@ module dma_interface #(
     //assign axi_master_port.aw_prot = '0;    // Unpriviledged access
     assign axi_master_port.b_ready = 1'b1;  // No error checking on write response
     //assign axi_master_port.ar_prot = '0;    // Unpriviledged access
-    // NOTE: AXI prot lines above commented out because the older AXI version of CVA6 in ESP platform does not have this signas defined for AXI Lite
+    // NOTE: AXI prot lines above commented out because the older AXI version of CVA6 in ESP platform does not have this signals defined for AXI Lite
     // if/when it gets updated this can be reverted 
 
     /*********************************************
@@ -121,11 +121,11 @@ module dma_interface #(
     // Input data FIFOs
     logic [$clog2(INPUT_FIFO_DEPTH)-1:0] data_input_fifo_count [INPUT_NODES_NUM-1:0];
 
-    logic [32:0] data_input_fifo_in [INPUT_NODES_NUM-1:0];
+    logic [DATA_WIDTH:0] data_input_fifo_in [INPUT_NODES_NUM-1:0];
     logic [INPUT_NODES_NUM-1:0] data_input_fifo_push;
     logic [INPUT_NODES_NUM-1:0] data_input_fifo_full;
 
-    logic [32:0] data_input_fifo_out [INPUT_NODES_NUM-1:0];
+    logic [DATA_WIDTH:0] data_input_fifo_out [INPUT_NODES_NUM-1:0];
     logic [INPUT_NODES_NUM-1:0] data_input_fifo_pop;
     logic [INPUT_NODES_NUM-1:0] data_input_fifo_empty;
 
@@ -143,15 +143,15 @@ module dma_interface #(
 
     // Reset signal for address offset after completed
     logic data_input_end_cycle_reset;
-
     logic data_config_end_cycle_reset;
-
 
     // Input config
     logic input_config_enable_shift;
-    logic [31:0] input_config_data_in;
+    logic [DATA_WIDTH-1:0] input_config_data_in;
     logic [159:0] input_config_configuration_word;
 
+
+    logic [DATA_WIDTH-1:0] axi_w_data_word;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if(!rst_ni) begin
@@ -230,7 +230,7 @@ module dma_interface #(
 
         if(data_input_arb_grant_one_hot[CONFIG_INDEX]) begin // Config address
             axi_read_adress_d = data_input_addr_offs_q[CONFIG_INDEX] + data_config_addr_i;
-            data_input_addr_offs_d[CONFIG_INDEX] = data_input_addr_offs_q[CONFIG_INDEX] + 32'h4;
+            data_input_addr_offs_d[CONFIG_INDEX] = data_input_addr_offs_q[CONFIG_INDEX] + DATA_STRIDE;
         end
 
         if(data_input_end_cycle_reset)
@@ -242,7 +242,6 @@ module dma_interface #(
         
         // Save transaction in outstanding FIFO
         input_outst_fifo_in.pe_one_hot = data_input_arb_grant_one_hot;
-        input_outst_fifo_in.odd_not_even_word = axi_read_adress_d[2]; // Even or odd 32 bit word for 64 bit access.
         input_outst_fifo_push = new_ar_trans;
 
         // For stall cycle count
@@ -266,18 +265,17 @@ module dma_interface #(
             wait_ar_d = new_ar_trans;
         end
 
-        axi_master_port.ar_addr = {axi_read_adress_q[31:3], 3'b000};
+        axi_master_port.ar_addr = axi_read_adress_q;
     end
 
     // Input data reception
     always_comb begin
-        logic [31:0] axi_r_data_word;
+        logic [DATA_WIDTH-1:0] axi_r_data_word;
 
         axi_master_port.r_ready = 1'b1;
 
         // All input FIFOs (and config) read from the same bus
-        axi_r_data_word = input_outst_fifo_out.odd_not_even_word ?
-                    axi_master_port.r_data[63:32] : axi_master_port.r_data[31:0];
+        axi_r_data_word = axi_master_port.r_data;
 
         for(int i=0; i<INPUT_NODES_NUM; i++)
             data_input_fifo_in[i] = axi_r_data_word;
@@ -300,7 +298,7 @@ module dma_interface #(
     // Input FIFO interface with CGRA
     always_comb begin
         for(int i=0; i<INPUT_NODES_NUM; i++)
-            data_input_o[32*i+:32] = data_input_fifo_out[i];
+            data_input_o[DATA_WIDTH*i+:DATA_WIDTH] = data_input_fifo_out[i];
 
         data_input_valid_o = ~data_input_fifo_empty;
         data_input_fifo_pop = data_input_valid_o & data_input_ready_i;
@@ -308,7 +306,7 @@ module dma_interface #(
 
 
     round_robin_arbiter_hold #(
-        .WIDTH(INPUT_NODES_NUM +1) // MSB is for config
+        .WIDTH(INPUT_NODES_NUM + 1) // MSB is for config
     ) i_data_input_arbiter (
         .clk_i(clk_i),
         .rst_ni(rst_ni),
@@ -323,7 +321,7 @@ module dma_interface #(
     for(genvar i = 0; i < INPUT_NODES_NUM; i++) begin : data_input_fifos
         fifo_v3 #(
             .DEPTH(INPUT_FIFO_DEPTH),
-            .dtype(logic [31:0])
+            .dtype(logic [DATA_WIDTH-1:0])
         ) i_data_input_fifo (
             .clk_i        ( clk_i                   ),
             .rst_ni       ( rst_ni                  ),
@@ -375,7 +373,9 @@ module dma_interface #(
     );
 
     // Shift register for configuration word
-    deserializer deserializer_i
+    deserializer #(
+        .DATA_WIDTH(DATA_WIDTH)
+    ) deserializer_i
     (
         .clk_i          (clk_i),
         .rst_ni         (rst_ni),
@@ -411,11 +411,11 @@ module dma_interface #(
     // Output data FIFOs
     logic [$clog2(OUTPUT_FIFO_DEPTH)-1:0] data_output_fifo_count [OUTPUT_NODES_NUM-1:0];
 
-    logic [32:0] data_output_fifo_in [OUTPUT_NODES_NUM-1:0];
+    logic [DATA_WIDTH:0] data_output_fifo_in [OUTPUT_NODES_NUM-1:0];
     logic [OUTPUT_NODES_NUM-1:0] data_output_fifo_push;
     logic [OUTPUT_NODES_NUM-1:0] data_output_fifo_full;
 
-    logic [32:0] data_output_fifo_out [INPUT_NODES_NUM-1:0];
+    logic [DATA_WIDTH:0] data_output_fifo_out [INPUT_NODES_NUM-1:0];
     logic [OUTPUT_NODES_NUM-1:0] data_output_fifo_pop;
     logic [OUTPUT_NODES_NUM-1:0] data_output_fifo_empty;
 
@@ -487,7 +487,7 @@ module dma_interface #(
     // Write address arbitration
     always_comb begin
         // Request
-        for(int i=0; i < OUTPUT_NODES_NUM; i++) begin
+        for(int i = 0; i < OUTPUT_NODES_NUM; i++) begin
             data_output_arb_request[i] = (data_output_fifo_unsent_count[i] != 0) &&
                                          (data_output_address_under_size[i]);
         end
@@ -499,10 +499,10 @@ module dma_interface #(
         axi_write_adress_d = axi_write_adress_q; 
         data_output_addr_offs_d = data_output_addr_offs_q;
 
-        for(int i=0; i<OUTPUT_NODES_NUM; i++) begin
+        for(int i = 0; i < OUTPUT_NODES_NUM; i++) begin
             if(data_output_arb_grant_one_hot[i]) begin
                 axi_write_adress_d = data_output_addr_offs_q[i] + data_output_addr_i[i];
-                data_output_addr_offs_d[i] = data_output_addr_offs_q[i] + 32'h4;
+                data_output_addr_offs_d[i] = data_output_addr_offs_q[i] + DATA_STRIDE;
             end
         end
 
@@ -511,7 +511,6 @@ module dma_interface #(
 
         // Save transaction in outstanding FIFO
         output_outst_fifo_in.pe_one_hot = data_output_arb_grant_one_hot;
-        output_outst_fifo_in.odd_not_even_word = axi_write_adress_d[2]; // Even or odd 32 bit word for 64 bit access.
         output_outst_fifo_push = new_aw_trans;
 
         // For stall cycle count
@@ -535,13 +534,11 @@ module dma_interface #(
             wait_aw_d = new_aw_trans;
         end
 
-        axi_master_port.aw_addr = {axi_write_adress_q[31:3], 3'b000};
+        axi_master_port.aw_addr = axi_write_adress_q;
     end
 
     // Send output data
     always_comb begin
-        logic [31:0] axi_w_data_word = '0;
-
         axi_master_port.w_valid = |output_outst_fifo_out.pe_one_hot && !output_outst_fifo_empty;
 
         // Output data FIFO mux
@@ -550,9 +547,9 @@ module dma_interface #(
                 axi_w_data_word = data_output_fifo_out[i];
         end
 
-        // Data and strobe for 32 bit write on 64 bit bus.
-        axi_master_port.w_data = {axi_w_data_word, axi_w_data_word};
-        axi_master_port.w_strb = output_outst_fifo_out.odd_not_even_word ? 8'hF0 : 8'h0F;
+        // Data and strobe for 64 bit write
+        axi_master_port.w_data = axi_w_data_word;
+        axi_master_port.w_strb = 'hFF;
 
         // Pop from appropriate FIFO when write data and pop outstanding
         if(axi_master_port.w_valid && axi_master_port.w_ready) begin
@@ -569,7 +566,7 @@ module dma_interface #(
     // Output FIFO interface with CGRA
     always_comb begin
         for(int i=0; i<OUTPUT_NODES_NUM; i++)
-            data_output_fifo_in[i] = data_output_i[32*i+:32];
+            data_output_fifo_in[i] = data_output_i[DATA_WIDTH*i+:DATA_WIDTH];
 
         data_output_ready_o = ~data_output_fifo_full;
         data_output_fifo_push = data_output_ready_o & data_output_valid_i;
@@ -593,7 +590,7 @@ module dma_interface #(
     for(genvar i = 0; i < OUTPUT_NODES_NUM; i++) begin : data_output_fifos
         fifo_v3 #(
             .DEPTH(OUTPUT_FIFO_DEPTH),
-            .dtype(logic [31:0])
+            .dtype(logic [DATA_WIDTH-1:0])
         ) i_data_output_fifo (
             .clk_i        ( clk_i                   ),
             .rst_ni       ( rst_ni                  ),

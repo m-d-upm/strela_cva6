@@ -170,8 +170,8 @@ module axi_cgra_top #(
   );
 
   axi_lite_to_axi_intf #(
-      .AXI_DATA_WIDTH(64)
-  ) i_axi_lite_to_axi_adpter (
+      .AXI_DATA_WIDTH(AXI_DATA_WIDTH)
+  ) i_axi_lite_to_axi_adapter (
       .in            (axi_lite_bus),
       .slv_aw_cache_i('0),
       .slv_ar_cache_i('0),
@@ -201,6 +201,8 @@ module axi_cgra_top #(
   logic [1:0] clear_interrupt_lines;
   logic [1:0] interrupt_lines;
   logic interrupt_line_shared;
+
+  logic [31:0] cycle_count_load_config, cycle_count_execute, cycle_count_stall;
 
   dma_config_csr #(
       .reg_req_t(regbus_req_t),
@@ -242,9 +244,7 @@ module axi_cgra_top #(
   logic control_execute_config, control_execute_input, control_execute_output;
   logic counters_read_stall, counters_write_stall;
 
-  logic [31:0] cycle_count_load_config, cycle_count_execute, cycle_count_stall;
-
-  countrol_unit i_control_unit (
+  control_unit i_control_unit (
       // Clock and reset
       .clk_i (clk_i),
       .rst_ni(rst_ni),
@@ -272,17 +272,19 @@ module axi_cgra_top #(
 
   );
 
-  logic [32*INPUT_NODES_NUM-1:0] cgra_data_input_data;
+  logic [AXI_DATA_WIDTH*INPUT_NODES_NUM-1:0] cgra_data_input_data;
   logic [INPUT_NODES_NUM-1:0] cgra_data_input_valid;
   logic [INPUT_NODES_NUM-1:0] cgra_data_input_ready;
 
-  logic [32*OUTPUT_NODES_NUM-1:0] cgra_data_output_data;
+  logic [AXI_DATA_WIDTH*OUTPUT_NODES_NUM-1:0] cgra_data_output_data;
   logic [OUTPUT_NODES_NUM-1:0] cgra_data_output_valid;
   logic [OUTPUT_NODES_NUM-1:0] cgra_data_output_ready;
 
   logic [159:0] configuration_word;
 
-  dma_interface i_dma_interface (
+  dma_interface #(
+    .DATA_WIDTH(AXI_DATA_WIDTH)
+  ) i_dma_interface (
       .clk_i(clk_i),
       .rst_ni(!(!rst_ni | reset_state_machines)),
       .axi_master_port(axi_lite_bus),
@@ -320,7 +322,9 @@ module axi_cgra_top #(
       .output_outst_fifo_full_o(counters_write_stall)
   );
 
-  CGRA cgra_i (
+  CGRA #(
+      .DATA_WIDTH(AXI_DATA_WIDTH)
+  ) cgra_i (
       .clk               (clk_i),
       .rst_n             (!(!rst_ni | clear_cgra_state)),   // Reset internal state
       .clk_bs            (clk_i),
