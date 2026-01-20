@@ -208,7 +208,7 @@ module dma_interface #(
             config_state_q <= config_state_d;
 
             if(enable_rot) begin
-                if(config_enable_rot[4] == 1'b1) begin
+                if(config_enable_rot[3] == 1'b1) begin
                     config_enable_rot[0] <= 1'b1;
                 end else begin
                     config_enable_rot[0] <= 1'b0;                    
