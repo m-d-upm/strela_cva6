@@ -280,7 +280,7 @@ module axi_cgra_top #(
   logic [OUTPUT_NODES_NUM-1:0] cgra_data_output_valid;
   logic [OUTPUT_NODES_NUM-1:0] cgra_data_output_ready;
 
-  logic [159:0] configuration_word;
+  logic [3:0] config_enable;
 
   dma_interface #(
     .DATA_WIDTH(AXI_DATA_WIDTH)
@@ -303,7 +303,6 @@ module axi_cgra_top #(
       .data_input_stride_i(data_input_stride),
 
       // CGRA config data signals
-      .configuration_word_o(configuration_word),
       .data_config_addr_i  (data_config_addr),
       .data_config_size_i  (data_config_size),
       .data_config_done_o  (done_config),
@@ -317,6 +316,8 @@ module axi_cgra_top #(
       .data_output_done_o   (done_exec),
       .output_arbiter_hold_i(output_arbiter_hold),
 
+      .output_config_enable (config_enable),
+
       // For stall cycle calculation
       .input_outst_fifo_full_o (counters_read_stall),
       .output_outst_fifo_full_o(counters_write_stall)
@@ -325,19 +326,16 @@ module axi_cgra_top #(
   CGRA #(
       .DATA_WIDTH(AXI_DATA_WIDTH)
   ) cgra_i (
-      .clk               (clk_i),
-      .rst_n             (!(!rst_ni | clear_cgra_state)),   // Reset internal state
-      .clk_bs            (clk_i),
-      .rst_n_bs          (!(!rst_ni | clear_cgra_config)),  // Reset configuration
+      .clk_i             (clk_i),
+      .rst_ni            (rst_ni),   // Reset internal state
+      .clr_i             (clear_cgra_state),
       .data_in           (cgra_data_input_data),
       .data_in_valid     (cgra_data_input_valid),
       .data_in_ready     (cgra_data_input_ready),
       .data_out          (cgra_data_output_data),
       .data_out_valid    (cgra_data_output_valid),
       .data_out_ready    (cgra_data_output_ready),
-      .config_bitstream  (configuration_word),
-      .bitstream_enable_i(1'b1),
-      .execute_i         (!done_exec)
+      .conf_en_i         (config_enable)
   );
 
   interrupt_controller int_ctrl_conf (
