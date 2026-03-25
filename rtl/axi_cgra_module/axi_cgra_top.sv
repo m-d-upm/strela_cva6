@@ -15,65 +15,15 @@
 
 module axi_cgra_top #(
     parameter int unsigned AXI_ID_WIDTH_MASTER = -1,
+    parameter int unsigned AXI_ID_WIDTH_SLAVE  = -1,
     parameter int unsigned AXI_ADDR_WIDTH      = -1,
     parameter int unsigned AXI_DATA_WIDTH      = -1,
     parameter int unsigned AXI_USER_WIDTH      = -1
 ) (
     input logic clk_i,
     input logic rst_ni,
-    output logic axi_awvalid,
-    input logic axi_awready,
-    output logic [AXI_ID_WIDTH_MASTER-1:0] axi_awid,
-    output logic [7:0] axi_awlen,
-    output logic [AXI_ADDR_WIDTH-1:0] axi_awaddr,
-    output logic axi_wvalid,
-    input logic axi_wready,
-    output logic [AXI_DATA_WIDTH-1:0] axi_wdata,
-    output logic [AXI_DATA_WIDTH/8-1:0] axi_wstrb,
-    output logic axi_wlast,
-    output logic axi_arvalid,
-    input logic axi_arready,
-    output logic [AXI_ID_WIDTH_MASTER-1:0] axi_arid,
-    output logic [7:0] axi_arlen,
-    output logic [AXI_ADDR_WIDTH-1:0] axi_araddr,
-    input logic [1:0] axi_bresp,
-    input logic axi_bvalid,
-    output logic axi_bready,
-    input logic [AXI_ID_WIDTH_MASTER-1:0] axi_bid,
-    input logic axi_rvalid,
-    output logic axi_rready,
-    input logic [AXI_ID_WIDTH_MASTER-1:0] axi_rid,
-    input logic axi_rlast,
-    input logic [AXI_DATA_WIDTH-1:0] axi_rdata,
-    input logic [1:0] axi_rresp,
-    output logic [2:0] axi_awsize,
-    output logic [2:0] axi_arsize,
-    output logic [1:0] axi_awburst,
-    output logic [1:0] axi_arburst,
-    output logic axi_awlock,
-    output logic axi_arlock,
-    output logic [3:0] axi_awcache,
-    output logic [3:0] axi_arcache,
-    output logic [2:0] axi_awprot,
-    output logic [2:0] axi_arprot,
-    output logic [3:0] axi_awqos,
-    output logic [5:0] axi_awatop,
-    output logic [3:0] axi_awregion,
-    output logic [3:0] axi_arqos,
-    output logic [3:0] axi_arregion,
-    output logic [AXI_USER_WIDTH-1:0] axi_awuser,
-    output logic [AXI_USER_WIDTH-1:0] axi_wuser,
-    output logic [AXI_USER_WIDTH-1:0] axi_aruser,
-    input logic [AXI_USER_WIDTH-1:0] axi_buser,
-    input logic [AXI_USER_WIDTH-1:0] axi_ruser,
-    input logic apb_reg_bus_penable,
-    input logic apb_reg_bus_pwrite,
-    input logic [31:0] apb_reg_bus_paddr,
-    input logic apb_reg_bus_psel,
-    input logic [31:0] apb_reg_bus_pwdata,
-    output logic [31:0] apb_reg_bus_prdata,
-    output logic apb_reg_bus_pready,
-    output logic apb_reg_bus_pslverr,
+    AXI_BUS.Slave       axi_slave_port,
+    AXI_BUS.Master      axi_master_port,
     output logic[1:0]  int_lines, // two - one to signal exec done index [1], other to signal config loading done index [0]
     output logic int_line_shared // shared IRQ, combined int_lines from above, ok to be shared since config and exec operations should be executed sequentially
 );
@@ -86,96 +36,34 @@ module axi_cgra_top #(
   regbus_req_t regbus_req;
   regbus_rsp_t regbus_rsp;
 
-  AXI_BUS #(
-      .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
-      .AXI_DATA_WIDTH(AXI_DATA_WIDTH),
-      .AXI_ID_WIDTH  (AXI_ID_WIDTH_MASTER),
-      .AXI_USER_WIDTH(AXI_USER_WIDTH)
-  ) aux_axi_master ();
-
-  //    AW
-  assign axi_awid         = aux_axi_master.aw_id;
-  assign axi_awaddr       = aux_axi_master.aw_addr;
-  assign axi_awlen        = aux_axi_master.aw_len;
-  assign axi_awsize       = aux_axi_master.aw_size;
-  assign axi_awburst      = aux_axi_master.aw_burst;
-  assign axi_awlock       = aux_axi_master.aw_lock;
-  assign axi_awcache      = aux_axi_master.aw_cache;
-  assign axi_awprot       = aux_axi_master.aw_prot;
-  assign axi_awqos        = aux_axi_master.aw_qos;
-  assign axi_awatop       = aux_axi_master.aw_atop;
-  assign axi_awregion     = aux_axi_master.aw_region;
-  assign axi_awvalid      = aux_axi_master.aw_valid;
-  assign axi_awuser       = aux_axi_master.aw_user;
-
-  assign aux_axi_master.aw_ready = axi_awready;
-  //    W
-  assign axi_wdata        = aux_axi_master.w_data;
-  assign axi_wstrb        = aux_axi_master.w_strb;
-  assign axi_wlast        = aux_axi_master.w_last;
-  assign axi_wvalid       = aux_axi_master.w_valid;
-  assign axi_wuser       = aux_axi_master.w_user;
-  assign aux_axi_master.w_ready  = axi_wready;
-  //    B
-  assign aux_axi_master.b_id     = axi_bid;
-  assign aux_axi_master.b_resp   = axi_bresp;
-  assign aux_axi_master.b_valid  = axi_bvalid;
-  assign aux_axi_master.b_user  = axi_buser;
-  assign axi_bready       = aux_axi_master.b_ready;
-
-  //    AR
-  assign axi_arid         = aux_axi_master.ar_id;
-  assign axi_araddr       = aux_axi_master.ar_addr;
-  assign axi_arlen        = aux_axi_master.ar_len;
-  assign axi_arsize       = aux_axi_master.ar_size;
-  assign axi_arburst      = aux_axi_master.ar_burst;
-  assign axi_arlock       = aux_axi_master.ar_lock;
-  assign axi_arcache      = aux_axi_master.ar_cache;
-  assign axi_arprot       = aux_axi_master.ar_prot;
-  assign axi_arqos        = aux_axi_master.ar_qos;
-  assign axi_arregion     = aux_axi_master.ar_region;
-  assign axi_arvalid      = aux_axi_master.ar_valid;
-  assign axi_aruser       = aux_axi_master.ar_user;
-  assign aux_axi_master.ar_ready = axi_arready;
-  //    R
-  assign aux_axi_master.r_id     = axi_rid;
-  assign aux_axi_master.r_data   = axi_rdata;
-  assign aux_axi_master.r_resp   = axi_rresp;
-  assign aux_axi_master.r_last   = axi_rlast;
-  assign aux_axi_master.r_valid  = axi_rvalid;
-  assign aux_axi_master.r_user = axi_ruser;
-  assign axi_rready       = aux_axi_master.r_ready;
-
   AXI_LITE #(
-      .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
-      .AXI_DATA_WIDTH(AXI_DATA_WIDTH)
-  ) axi_lite_bus ();
+    .AXI_ADDR_WIDTH ( AXI_ADDR_WIDTH        ),
+    .AXI_DATA_WIDTH ( AXI_DATA_WIDTH        )
+  ) axi_lite_bus();
 
-  apb_to_reg_adapter #(
-      .regbus_req_t(regbus_req_t),
-      .regbus_rsp_t(regbus_rsp_t)
-  ) i_apb_to_reg_adapter (
-      .clk_i       (clk_i),
-      .rst_ni      (rst_ni),
-      .apb_penable (apb_reg_bus_penable),
-      .apb_pwrite  (apb_reg_bus_pwrite),
-      .apb_paddr   (apb_reg_bus_paddr),
-      .apb_psel    (apb_reg_bus_psel),
-      .apb_pwdata  (apb_reg_bus_pwdata),
-      .apb_prdata  (apb_reg_bus_prdata),
-      .apb_pready  (apb_reg_bus_pready),
-      .apb_pslverr (apb_reg_bus_pslverr),
-      .regbus_req_o(regbus_req),
-      .regbus_rsp_i(regbus_rsp)
+  axi_slave_to_reg_adapter #(
+    .AXI_ID_WIDTH_MASTER    ( AXI_ID_WIDTH_MASTER   ),
+    .AXI_ID_WIDTH_SLAVE     ( AXI_ID_WIDTH_SLAVE    ),
+    .AXI_ADDR_WIDTH         ( AXI_ADDR_WIDTH        ),
+    .AXI_DATA_WIDTH         ( AXI_DATA_WIDTH        ),
+    .AXI_USER_WIDTH         ( AXI_USER_WIDTH        ),
+    .regbus_req_t           ( regbus_req_t          ),
+    .regbus_rsp_t           ( regbus_rsp_t          )
+  ) i_axi_slave_to_reg_adapter (
+    .clk_i                  ( clk_i             ),
+    .rst_ni                 ( rst_ni            ),
+    .axi_slave_port         ( axi_slave_port    ),
+    .regbus_req_o           ( regbus_req        ),
+    .regbus_rsp_i           ( regbus_rsp        )
   );
 
   axi_lite_to_axi_intf #(
-      .AXI_DATA_WIDTH(AXI_DATA_WIDTH)
-  ) i_axi_lite_to_axi_adapter (
-      .in            (axi_lite_bus),
-      .slv_aw_cache_i('0),
-      .slv_ar_cache_i('0),
-      .out           (aux_axi_master)
+    .AXI_DATA_WIDTH (AXI_DATA_WIDTH)
+  ) i_axi_lite_to_axi_adpter (
+    .in             ( axi_lite_bus      ),
+    .slv_aw_cache_i ( '0                ),
+    .slv_ar_cache_i ( '0                ),
+    .out            ( axi_master_port   )
   );
 
   logic [31:0] data_input_addr  [ INPUT_NODES_NUM-1:0];

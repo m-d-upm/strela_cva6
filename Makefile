@@ -33,7 +33,8 @@ verilator_srcs += rtl/axi_cgra_module/axi_cgra_top.sv
 verilator_srcs += rtl/axi_cgra_module/dma_config_csr.sv
 verilator_srcs += rtl/axi_cgra_module/dma_interface.sv
 verilator_srcs += rtl/axi_cgra_module/control_unit.sv
-verilator_srcs += rtl/axi_cgra_module/apb_to_reg_adapter.sv
+#verilator_srcs += rtl/axi_cgra_module/apb_to_reg_adapter.sv
+verilator_srcs += rtl/axi_cgra_module/axi_slave_to_reg_adapter.sv
 verilator_srcs += rtl/axi_cgra_module/interrupt_controller.sv
 
 ############# Strela CGRA sources #############
