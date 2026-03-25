@@ -323,18 +323,18 @@ module axi_cgra_top #(
       .output_outst_fifo_full_o(counters_write_stall)
   );
 
-  CGRA #(
+  cgra #(
       .DATA_WIDTH(AXI_DATA_WIDTH)
   ) cgra_i (
       .clk_i             (clk_i),
       .rst_ni            (rst_ni),   // Reset internal state
       .clr_i             (clear_cgra_state),
-      .data_in           (cgra_data_input_data),
-      .data_in_valid     (cgra_data_input_valid),
-      .data_in_ready     (cgra_data_input_ready),
-      .data_out          (cgra_data_output_data),
-      .data_out_valid    (cgra_data_output_valid),
-      .data_out_ready    (cgra_data_output_ready),
+      .din_i           (cgra_data_input_data),
+      .din_v_i     (cgra_data_input_valid),
+      .din_r_o     (cgra_data_input_ready),
+      .dout_o          (cgra_data_output_data),
+      .dout_v_o    (cgra_data_output_valid),
+      .dout_r_i    (cgra_data_output_ready),
       .conf_en_i         (config_enable)
   );
 

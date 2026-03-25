@@ -73,12 +73,7 @@ module dma_interface #(
 
     localparam real CONF_SIZE_BITS = 160.0;
     localparam int CONF_WORDS_PER_PE = int'($ceil(CONF_SIZE_BITS / DATA_WIDTH)); // 32-bit version of STRELA uses five 32-bit words for config, 64-bit version uses three 64-bit words
-
-    typedef enum logic [1:0] {
-        STATE_IDLE = 2'b00,
-        STATE_WAIT_FOR_FULL_BUFFER = 2'b01,
-        STATE_READ_DATA_FROM_FIFO = 2'b10
-    } fsm_t;
+    localparam int CONF_WORDS_PER_COLUMN = OUTPUT_NODES_NUM * CONF_WORDS_PER_PE;
 
     typedef struct packed
     {
@@ -158,34 +153,8 @@ module dma_interface #(
     logic input_config_push_conf_word;
 
     logic [DATA_WIDTH-1:0] config_data_word;
-    logic [DATA_WIDTH-1:0] config_fifo_being_read_from_output;
-    
-    logic config_fifo_being_read_from_empty;
-    logic config_fifo_being_written_to_full;
-
-    logic [DATA_WIDTH-1:0] config_fifo_output_0;
-    logic config_fifo_pop_0;
-    logic config_fifo_empty_0;
-    logic config_fifo_push_0;
-    logic config_fifo_full_0;
-    logic [$clog2(CONF_WORDS_PER_PE*INPUT_NODES_NUM)-1:0] config_fifo_count_0;
-
-    logic [DATA_WIDTH-1:0] config_fifo_output_1;
-    logic config_fifo_pop_1;
-    logic config_fifo_empty_1;
-    logic config_fifo_push_1;
-    logic config_fifo_full_1;
-    logic [$clog2(CONF_WORDS_PER_PE*INPUT_NODES_NUM)-1:0] config_fifo_count_1;
-
-    logic double_buffer_wr_ptr_d, double_buffer_wr_ptr_q;
-    logic double_buffer_r_ptr_d, double_buffer_r_ptr_q;
-
-    logic [4:0] config_enable_rot;
-    logic enable_rot;
-    //logic [$clog2(CONF_WORDS_PER_PE*INPUT_NODES_NUM)-1:0] config_fifo_being_read_from_count;
-
-    // config state machine
-    fsm_t config_state_d, config_state_q;
+    logic [3:0] config_data_word_counter;
+    logic [2:0] config_columns_counter;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if(!rst_ni) begin
@@ -193,31 +162,26 @@ module dma_interface #(
             wait_ar_q <= 1'b0;
             axi_read_adress_q <= '0;
             data_input_addr_offs_q <= '{default: '0};
-            config_enable_rot <= '{0:1, default:0};
-            double_buffer_wr_ptr_q <= '0;
-            double_buffer_r_ptr_q <= '0;
-            config_state_q <= STATE_IDLE;     
+            config_data_word_counter <= '0;
+            config_columns_counter <= '0;
         end else begin
             data_input_execute_q <= data_input_execute_d;
             data_config_execute_q <= data_config_execute_d;
             wait_ar_q <= wait_ar_d;
             axi_read_adress_q <= axi_read_adress_d;
             data_input_addr_offs_q <= data_input_addr_offs_d;
-            double_buffer_wr_ptr_q <= double_buffer_wr_ptr_d;
-            double_buffer_r_ptr_q <= double_buffer_r_ptr_d;
-            config_state_q <= config_state_d;
 
-            if(enable_rot) begin
-                if(config_enable_rot[3] == 1'b1) begin
-                    config_enable_rot[0] <= 1'b1;
-                end else begin
-                    config_enable_rot[0] <= 1'b0;                    
+            if(config_columns_counter == OUTPUT_NODES_NUM) begin
+                config_columns_counter <= 0;
+            end
+
+            if(input_config_push_conf_word && data_config_execute_q && (config_data_word_counter < CONF_WORDS_PER_COLUMN)) begin
+                config_data_word_counter <= config_data_word_counter + 1;
+            end else begin
+                if (config_data_word_counter == CONF_WORDS_PER_COLUMN) begin
+                    config_columns_counter <= config_columns_counter + 1;
+                    config_data_word_counter <= 0;
                 end
-
-                config_enable_rot[1] <= config_enable_rot[0];
-                config_enable_rot[2] <= config_enable_rot[1];
-                config_enable_rot[3] <= config_enable_rot[2];
-                config_enable_rot[4] <= config_enable_rot[3];
             end
         end
     end
@@ -350,82 +314,20 @@ module dma_interface #(
     // Input/Config FIFO interface with CGRA
     always_comb begin
         for(int i = 0; i < INPUT_NODES_NUM; i++)
-            data_input_o[DATA_WIDTH*i+:DATA_WIDTH] = output_config_enable[i] ? config_fifo_being_read_from_output : data_input_fifo_out[i];
+            data_input_o[DATA_WIDTH*i+:DATA_WIDTH] = data_config_execute_q ? config_data_word : data_input_fifo_out[i];
 
         data_input_valid_o = ~data_input_fifo_empty;
         data_input_fifo_pop = data_input_valid_o & data_input_ready_i;
     end
 
     // Config signals
-    assign config_fifo_being_written_to_full = double_buffer_wr_ptr_q ? config_fifo_full_1 : config_fifo_full_0;
-    assign config_fifo_being_read_from_empty = double_buffer_r_ptr_q ? config_fifo_empty_1 : config_fifo_empty_0;
-    assign config_fifo_being_read_from_output = double_buffer_r_ptr_q ? config_fifo_output_1 : config_fifo_output_0;
-    //assign config_fifo_being_read_from_count = double_buffer_r_ptr_q ? config_fifo_count_1 : config_fifo_count_0;
-    assign output_config_enable = config_enable_rot[4:1];
-
-    // Config FIFO logic
     always_comb begin
-        double_buffer_wr_ptr_d = double_buffer_wr_ptr_q;
-
-        if(double_buffer_wr_ptr_d) begin
-            config_fifo_push_1 = input_config_push_conf_word;
-            config_fifo_push_0 = 1'b0;
-        end else begin
-            config_fifo_push_0 = input_config_push_conf_word;
-            config_fifo_push_1 = 1'b0;
-        end
-
-        if (config_fifo_being_written_to_full) begin
-            double_buffer_wr_ptr_d = double_buffer_wr_ptr_d ^ 1'b1;
-        end
-    end
-
-    // Config FIFO FSM
-    always_comb begin
-        config_state_d = STATE_IDLE;
-        config_fifo_pop_1 = 0;
-        config_fifo_pop_0 = 0;
-        double_buffer_r_ptr_d = double_buffer_r_ptr_q;
-        enable_rot = 1'b0;
-
-        unique case (config_state_q)
-            STATE_IDLE: begin
-                if(data_config_execute_d) begin
-                    config_state_d = STATE_WAIT_FOR_FULL_BUFFER;
-                end else begin
-                    config_state_d = STATE_IDLE;
-                end
-            end
-            STATE_WAIT_FOR_FULL_BUFFER: begin
-                if(config_fifo_being_written_to_full) begin
-                    config_state_d = STATE_READ_DATA_FROM_FIFO;
-                    enable_rot = 1'b1;
-                end else begin
-                    config_state_d = STATE_WAIT_FOR_FULL_BUFFER;
-                end
-            end
-            STATE_READ_DATA_FROM_FIFO: begin
-                if(config_fifo_being_read_from_empty) begin
-                    double_buffer_r_ptr_d = double_buffer_r_ptr_d ^ 1'b1;
-                    config_fifo_pop_1 = 0; // clearing both here is OK
-                    config_fifo_pop_0 = 0; // one of the two will already be 0
-
-                    //if(!data_config_execute_q) begin
-                    //    config_state_d = STATE_IDLE;
-                    //end else begin
-                        config_state_d = STATE_WAIT_FOR_FULL_BUFFER;
-                    //end
-
-                end else begin
-                    config_state_d = STATE_READ_DATA_FROM_FIFO;
-                    if(double_buffer_r_ptr_d) begin
-                        config_fifo_pop_1 = 1'b1;
-                    end else begin
-                        config_fifo_pop_0 = 1'b1;
-                    end
-                end
-            end
-        default: config_state_d = STATE_IDLE;
+        case (config_columns_counter) // case statement header
+            3'b000 : output_config_enable = { 1'b0, 1'b0, 1'b0, input_config_push_conf_word };
+            3'b001 : output_config_enable = { 1'b0, 1'b0, input_config_push_conf_word, 1'b0 };
+            3'b010 : output_config_enable = { 1'b0, input_config_push_conf_word, 1'b0, 1'b0 };
+            3'b011 : output_config_enable = { input_config_push_conf_word, 1'b0, 1'b0, 1'b0 };
+            default: output_config_enable = '0;
         endcase
     end
 
@@ -495,42 +397,7 @@ module dma_interface #(
         .pop_i        ( input_outst_fifo_pop    ),
         .empty_o      ( input_outst_fifo_empty  )
     );
-
-    // Config input data words FIFOs
-    fifo_v3 #(
-        .DEPTH(CONF_WORDS_PER_PE*INPUT_NODES_NUM),
-        .dtype(logic [DATA_WIDTH-1:0])
-    ) i_config_input_fifo_0 (
-        .clk_i        ( clk_i                   ),
-        .rst_ni       ( rst_ni                  ),
-        .flush_i      ( 1'b0                    ),
-        .testmode_i   ( 1'b0                    ),
-        .usage_o      ( config_fifo_count_0  ),
-        .data_i       ( config_data_word   ),
-        .push_i       ( config_fifo_push_0   ),
-        .full_o       ( config_fifo_full_0   ),
-        .data_o       ( config_fifo_output_0 ),
-        .pop_i        ( config_fifo_pop_0    ),
-        .empty_o      ( config_fifo_empty_0  )
-    );
-
-    fifo_v3 #(
-        .DEPTH(CONF_WORDS_PER_PE*INPUT_NODES_NUM),
-        .dtype(logic [DATA_WIDTH-1:0])
-    ) i_config_input_fifo_1 (
-        .clk_i        ( clk_i                   ),
-        .rst_ni       ( rst_ni                  ),
-        .flush_i      ( 1'b0                    ),
-        .testmode_i   ( 1'b0                    ),
-        .usage_o      ( config_fifo_count_1  ),
-        .data_i       ( config_data_word   ),
-        .push_i       ( config_fifo_push_1   ),
-        .full_o       ( config_fifo_full_1   ),
-        .data_o       ( config_fifo_output_1 ),
-        .pop_i        ( config_fifo_pop_1    ),
-        .empty_o      ( config_fifo_empty_1  )
-    );
-
+   
     /*********************************************
     *              OUTPUT DATA                   *
     **********************************************/
