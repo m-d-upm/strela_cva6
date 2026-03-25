@@ -22,7 +22,7 @@ verilator_inc_dirs = $(include_dir)
 ############# Source packages #############
 verilator_src_pkgs = rtl/vendor/axi_pkg.sv \
 		     rtl/cva6_files/ariane_soc_pkg.sv \
-		     rtl/strela/rtl/include/cgra_pkg.sv \
+		     rtl/strela/rtl/cgra/cgra_pkg.sv \
     		     rtl/vendor/cf_math_pkg.sv
 
 
@@ -32,13 +32,13 @@ verilator_srcs += rtl/axi_cgra_module/test_ram_64.sv
 verilator_srcs += rtl/axi_cgra_module/axi_cgra_top.sv
 verilator_srcs += rtl/axi_cgra_module/dma_config_csr.sv
 verilator_srcs += rtl/axi_cgra_module/dma_interface.sv
-verilator_srcs += rtl/axi_cgra_module/deserializer.sv
 verilator_srcs += rtl/axi_cgra_module/control_unit.sv
 verilator_srcs += rtl/axi_cgra_module/apb_to_reg_adapter.sv
 verilator_srcs += rtl/axi_cgra_module/interrupt_controller.sv
 
 ############# Strela CGRA sources #############
 verilator_srcs += $(wildcard rtl/strela/rtl/cgra/*.sv)
+verilator_srcs += $(wildcard rtl/strela/rtl/fpga/*.sv)
 
 ############# Vendor sources ###########
 verilator_srcs += $(vendor_src_dir)/rstgen_bypass.sv

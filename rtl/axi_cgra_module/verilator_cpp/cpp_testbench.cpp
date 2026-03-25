@@ -16,7 +16,6 @@
 #include "Vsim_top_test_ram_64.h"
 
 // To access registers
-#include "Vsim_top_axi_cgra_top__pi1.h"
 #include "Vsim_top_axi_cgra_top__pi2.h"
 
 #include "Vsim_top_dma_config_csr__Tz19_TBz20.h"
@@ -53,7 +52,6 @@ uint32_t read_reg(Vsim_top *dut, uint32_t reg_addr)
     return dut->sim_top->i_axi_cgra_top->i_dma_config_csr->reg_read_data;
 }
 
-
 #define RAM_CONTENTS dut->sim_top->i_test_ram->ram_memory_contents
 
 uint64_t read_ram(Vsim_top *dut, uint32_t ram_addr)
@@ -80,10 +78,6 @@ void examine_mem(Vsim_top *dut, uint32_t ram_addr1, uint32_t ram_addr2)
     }
 }
 
-
-
-
-
 int main(int argc, char** argv, char** env) {
 
     const std::unique_ptr<VerilatedContext> contextp{new VerilatedContext};
@@ -95,33 +89,22 @@ int main(int argc, char** argv, char** env) {
     dut->trace(m_trace, 99);
     m_trace->open("waveform.vcd");
 
-
     ////////////// MEMORY SETUP ///////////////////
 
     #define CONFIG_ADDR     0x80000000
     #define DATA_IN_ADDR    0x80001000
     #define DATA_OUT_ADDR   0x80002000
 
-
     // Copy bitstream to RAM
 
     uint32_t *cgra_kernel = bypass_kernel;
     uint32_t cgra_kernel_size = BYPASS_SIZE;
-
-    // uint32_t *cgra_kernel = dot_product_kernel;
-    // uint32_t cgra_kernel_size = DOT_PRODUCT_SIZE;
-
-    // uint32_t *cgra_kernel = relu_kernel;
-    // uint32_t cgra_kernel_size = RELU_KRNL_SIZE;
-
-
 
     for(int i=0; i<cgra_kernel_size; i+=2)
     {
         write_ram(dut, CONFIG_ADDR + i*4, \
                     ((uint64_t)cgra_kernel[i+1] << 32) | cgra_kernel[i]);
     }
-
 
     // Setup Input data
     for(int i = 0; i<16; i++)
@@ -205,32 +188,6 @@ int main(int argc, char** argv, char** env) {
             write_reg_eval(dut, m_trace, CGRA_OUT3_ADDR_A, DATA_OUT_ADDR+0x60);
             write_reg_eval(dut, m_trace, CGRA_OUT3_SIZE_A, 0x4*16);
 
-
-            // // Dot product:
-            // write_reg_eval(dut, m_trace, CGRA_IN0_ADDR_A, DATA_IN_ADDR);
-            // write_reg_eval(dut, m_trace, CGRA_IN0_SIZE_A, 0x4 << 16 | 0x4*16);
-
-            // write_reg_eval(dut, m_trace, CGRA_IN1_ADDR_A, DATA_IN_ADDR);
-            // write_reg_eval(dut, m_trace, CGRA_IN1_SIZE_A, 0x4 << 16 | 0x4*16);
-
-            // write_reg_eval(dut, m_trace, CGRA_IN2_ADDR_A, DATA_IN_ADDR);
-            // write_reg_eval(dut, m_trace, CGRA_IN2_SIZE_A, 0x4 << 16 | 0x4*16);
-
-            // write_reg_eval(dut, m_trace, CGRA_IN3_ADDR_A, DATA_IN_ADDR);
-            // write_reg_eval(dut, m_trace, CGRA_IN3_SIZE_A, 0x4 << 16 | 0x4*16);
-
-
-
-            // write_reg_eval(dut, m_trace, CGRA_OUT1_ADDR_A, DATA_OUT_ADDR);
-            // write_reg_eval(dut, m_trace, CGRA_OUT1_SIZE_A, 0x4*1);
-
-            // write_reg_eval(dut, m_trace, CGRA_OUT2_ADDR_A, DATA_OUT_ADDR+0x20);
-            // write_reg_eval(dut, m_trace, CGRA_OUT2_SIZE_A, 0x4*1);
-
-            // write_reg_eval(dut, m_trace, CGRA_OUT3_ADDR_A, DATA_OUT_ADDR+0x40);
-            // write_reg_eval(dut, m_trace, CGRA_OUT3_SIZE_A, 0x4*1);
-
-
             write_reg_eval(dut, m_trace, CGRA_CTRL_A, CGRA_CTRL_BIT_START_EXEC);
         } 
 
@@ -265,47 +222,3 @@ int main(int argc, char** argv, char** env) {
     delete dut;
     exit(EXIT_SUCCESS);
 }
-
-
-    // dut->rst_ni = 0;
-    // while (!contextp->gotFinish()) {
-    //     dut->clk_i ^= 1;
-    //     dut->eval();
-    //     m_trace->dump(sim_time);
-    //     sim_time++;
-
-    //     if(sim_time > 4 && dut->clk_i == 1)
-    //         dut->rst_ni = 1;
-
-    // }
-
-
-
-// // Start exec
-        // if(sim_time == 500)
-        // {
-        //     write_reg_eval(dut, m_trace, CGRA_IN0_ADDR_A, DATA_IN_ADDR);
-        //     write_reg_eval(dut, m_trace, CGRA_IN0_SIZE_A, 0x4 << 16 | 40);
-
-        //     write_reg_eval(dut, m_trace, CGRA_IN1_ADDR_A, DATA_IN_ADDR);
-        //     write_reg_eval(dut, m_trace, CGRA_IN1_SIZE_A, 0x4 << 16 | 40);
-
-        //     write_reg_eval(dut, m_trace, CGRA_IN2_ADDR_A, DATA_IN_ADDR);
-        //     write_reg_eval(dut, m_trace, CGRA_IN2_SIZE_A, 0x4 << 16 | 40);
-
-        //     write_reg_eval(dut, m_trace, CGRA_IN3_ADDR_A, DATA_IN_ADDR);
-        //     write_reg_eval(dut, m_trace, CGRA_IN3_SIZE_A, 0x4 << 16 | 40);
-
-
-
-        //     write_reg_eval(dut, m_trace, CGRA_OUT1_ADDR_A, DATA_OUT_ADDR);
-        //     write_reg_eval(dut, m_trace, CGRA_OUT1_SIZE_A, 0x4*3);
-
-        //     write_reg_eval(dut, m_trace, CGRA_OUT2_ADDR_A, DATA_OUT_ADDR+0x100);
-        //     write_reg_eval(dut, m_trace, CGRA_OUT2_SIZE_A, 0x4*3);
-
-        //     write_reg_eval(dut, m_trace, CGRA_OUT3_ADDR_A, DATA_OUT_ADDR+0x200);
-        //     write_reg_eval(dut, m_trace, CGRA_OUT3_SIZE_A, 0x4*3);
-
-        //     write_reg_eval(dut, m_trace, CGRA_CTRL_A, CGRA_CTRL_BIT_START_EXEC);
-        // }  
