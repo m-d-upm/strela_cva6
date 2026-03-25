@@ -164,28 +164,28 @@ int main(int argc, char** argv, char** env) {
 
             // Bypass
             write_reg_eval(dut, m_trace, CGRA_IN0_ADDR_A, DATA_IN_ADDR);
-            write_reg_eval(dut, m_trace, CGRA_IN0_SIZE_A, 0x4 << 16 | 0x4*16);
+            write_reg_eval(dut, m_trace, CGRA_IN0_SIZE_A, 0x8 << 16 | 0x4*16);
 
             write_reg_eval(dut, m_trace, CGRA_IN1_ADDR_A, DATA_IN_ADDR);
-            write_reg_eval(dut, m_trace, CGRA_IN1_SIZE_A, 0x4 << 16 | 0x4*16);
+            write_reg_eval(dut, m_trace, CGRA_IN1_SIZE_A, 0x8 << 16 | 0x4*16);
 
             write_reg_eval(dut, m_trace, CGRA_IN2_ADDR_A, DATA_IN_ADDR);
-            write_reg_eval(dut, m_trace, CGRA_IN2_SIZE_A, 0x4 << 16 | 0x4*16);
+            write_reg_eval(dut, m_trace, CGRA_IN2_SIZE_A, 0x8 << 16 | 0x4*16);
 
             write_reg_eval(dut, m_trace, CGRA_IN3_ADDR_A, DATA_IN_ADDR);
-            write_reg_eval(dut, m_trace, CGRA_IN3_SIZE_A, 0x4 << 16 | 0x4*16);
+            write_reg_eval(dut, m_trace, CGRA_IN3_SIZE_A, 0x8 << 16 | 0x4*16);
 
 
             write_reg_eval(dut, m_trace, CGRA_OUT0_ADDR_A, DATA_OUT_ADDR);
             write_reg_eval(dut, m_trace, CGRA_OUT0_SIZE_A, 0x4*16);
 
-            write_reg_eval(dut, m_trace, CGRA_OUT1_ADDR_A, DATA_OUT_ADDR+0x20);
+            write_reg_eval(dut, m_trace, CGRA_OUT1_ADDR_A, DATA_OUT_ADDR+0x40);
             write_reg_eval(dut, m_trace, CGRA_OUT1_SIZE_A, 0x4*16);
             
-            write_reg_eval(dut, m_trace, CGRA_OUT2_ADDR_A, DATA_OUT_ADDR+0x40);
+            write_reg_eval(dut, m_trace, CGRA_OUT2_ADDR_A, DATA_OUT_ADDR+0x80);
             write_reg_eval(dut, m_trace, CGRA_OUT2_SIZE_A, 0x4*16);
             
-            write_reg_eval(dut, m_trace, CGRA_OUT3_ADDR_A, DATA_OUT_ADDR+0x60);
+            write_reg_eval(dut, m_trace, CGRA_OUT3_ADDR_A, DATA_OUT_ADDR+0x100);
             write_reg_eval(dut, m_trace, CGRA_OUT3_SIZE_A, 0x4*16);
 
             write_reg_eval(dut, m_trace, CGRA_CTRL_A, CGRA_CTRL_BIT_START_EXEC);
