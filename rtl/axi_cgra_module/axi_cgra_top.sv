@@ -327,7 +327,7 @@ module axi_cgra_top #(
       .DATA_WIDTH(AXI_DATA_WIDTH)
   ) cgra_i (
       .clk_i             (clk_i),
-      .rst_ni            (rst_ni),   // Reset internal state
+      .rst_ni            (!(!rst_ni | clear_cgra_config)),   // Reset internal state
       .clr_i             (clear_cgra_state),
       .din_i           (cgra_data_input_data),
       .din_v_i     (cgra_data_input_valid),

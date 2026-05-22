@@ -90,7 +90,7 @@ module dma_interface #(
     //assign axi_master_port.aw_prot = '0;    // Unpriviledged access
     assign axi_master_port.b_ready = 1'b1;  // No error checking on write response
     //assign axi_master_port.ar_prot = '0;    // Unpriviledged access
-    // NOTE: AXI prot lines above commented out because the older AXI version of CVA6 in ESP platform does not have this signals defined for AXI Lite
+    // NOTE: AXI prot lines above commented out because the older AXI version of CVA6 in ESP platform does not have these signals defined for AXI Lite
     // if/when it gets updated this can be reverted 
 
     /*********************************************
@@ -125,11 +125,11 @@ module dma_interface #(
     // Input data FIFOs
     logic [$clog2(INPUT_FIFO_DEPTH)-1:0] data_input_fifo_count [INPUT_NODES_NUM-1:0];
 
-    logic [DATA_WIDTH-1:0] data_input_fifo_in [INPUT_NODES_NUM-1:0];
+    logic [DATA_WIDTH:0] data_input_fifo_in [INPUT_NODES_NUM-1:0];
     logic [INPUT_NODES_NUM-1:0] data_input_fifo_push;
     logic [INPUT_NODES_NUM-1:0] data_input_fifo_full;
 
-    logic [DATA_WIDTH-1:0] data_input_fifo_out [INPUT_NODES_NUM-1:0];
+    logic [DATA_WIDTH:0] data_input_fifo_out [INPUT_NODES_NUM-1:0];
     logic [INPUT_NODES_NUM-1:0] data_input_fifo_pop;
     logic [INPUT_NODES_NUM-1:0] data_input_fifo_empty;
 
@@ -153,8 +153,8 @@ module dma_interface #(
     logic input_config_push_conf_word;
 
     logic [DATA_WIDTH-1:0] config_data_word;
-    logic [3:0] config_data_word_counter;
-    logic [2:0] config_columns_counter;
+    logic [4:0] config_data_word_counter;
+    logic [4:0] config_columns_counter;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if(!rst_ni) begin

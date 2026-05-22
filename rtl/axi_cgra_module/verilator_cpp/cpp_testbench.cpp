@@ -97,8 +97,8 @@ int main(int argc, char** argv, char** env) {
 
     // Copy bitstream to RAM
 
-    uint32_t *cgra_kernel = bypass_kernel;
-    uint32_t cgra_kernel_size = BYPASS_SIZE;
+    uint32_t *cgra_kernel = relu_kernel;
+    uint32_t cgra_kernel_size = RELU_SIZE;
 
     for(int i=0; i<cgra_kernel_size; i+=2)
     {
@@ -109,7 +109,10 @@ int main(int argc, char** argv, char** env) {
     // Setup Input data
     for(int i = 0; i<16; i++)
     {
-        write_ram(dut, DATA_IN_ADDR + i*4, i);
+        if(i % 2 == 0)
+            write_ram(dut, DATA_IN_ADDR + i*8, i);
+        else
+            write_ram(dut, DATA_IN_ADDR + i*8, -i);
     }
     // write_ram(dut, DATA_IN_ADDR + 0x00, 1L << 32 | 2 );
     // write_ram(dut, DATA_IN_ADDR + 0x08, (uint64_t)(-2) << 32 | 4 );
@@ -125,7 +128,6 @@ int main(int argc, char** argv, char** env) {
 
         if(sim_time == 10)
         {
-            write_reg_eval(dut, m_trace, CGRA_CTRL_A, STRELA_CTRL_BIT_CLEAR_STATE);
             write_reg_eval(dut, m_trace, CGRA_CTRL_A, STRELA_CTRL_BIT_CLEAR_CONFIG);
         }
 
@@ -145,6 +147,7 @@ int main(int argc, char** argv, char** env) {
         if(sim_time == 400)
         {
             write_reg_eval(dut, m_trace, CGRA_CTRL_A, STRELA_CTRL_BIT_CLEAR_INT_CONFIG);
+            write_reg_eval(dut, m_trace, CGRA_CTRL_A, STRELA_CTRL_BIT_CLEAR_STATE);
         }
 
         // Start exec
@@ -164,29 +167,29 @@ int main(int argc, char** argv, char** env) {
 
             // Bypass
             write_reg_eval(dut, m_trace, CGRA_IN0_ADDR_A, DATA_IN_ADDR);
-            write_reg_eval(dut, m_trace, CGRA_IN0_SIZE_A, 0x8 << 16 | 0x4*16);
+            write_reg_eval(dut, m_trace, CGRA_IN0_SIZE_A, 0x8 << 16 | 0x8*16);
 
-            write_reg_eval(dut, m_trace, CGRA_IN1_ADDR_A, DATA_IN_ADDR);
-            write_reg_eval(dut, m_trace, CGRA_IN1_SIZE_A, 0x8 << 16 | 0x4*16);
+            //write_reg_eval(dut, m_trace, CGRA_IN1_ADDR_A, DATA_IN_ADDR);
+            //write_reg_eval(dut, m_trace, CGRA_IN1_SIZE_A, 0x8 << 16 | 0x8*16);
 
-            write_reg_eval(dut, m_trace, CGRA_IN2_ADDR_A, DATA_IN_ADDR);
-            write_reg_eval(dut, m_trace, CGRA_IN2_SIZE_A, 0x8 << 16 | 0x4*16);
+            //write_reg_eval(dut, m_trace, CGRA_IN2_ADDR_A, DATA_IN_ADDR);
+            //write_reg_eval(dut, m_trace, CGRA_IN2_SIZE_A, 0x8 << 16 | 0x8*16);
 
-            write_reg_eval(dut, m_trace, CGRA_IN3_ADDR_A, DATA_IN_ADDR);
-            write_reg_eval(dut, m_trace, CGRA_IN3_SIZE_A, 0x8 << 16 | 0x4*16);
+            //write_reg_eval(dut, m_trace, CGRA_IN3_ADDR_A, DATA_IN_ADDR);
+            //write_reg_eval(dut, m_trace, CGRA_IN3_SIZE_A, 0x8 << 16 | 0x8*16);
 
 
             write_reg_eval(dut, m_trace, CGRA_OUT0_ADDR_A, DATA_OUT_ADDR);
-            write_reg_eval(dut, m_trace, CGRA_OUT0_SIZE_A, 0x4*16);
+            write_reg_eval(dut, m_trace, CGRA_OUT0_SIZE_A, 0x8*16);
 
-            write_reg_eval(dut, m_trace, CGRA_OUT1_ADDR_A, DATA_OUT_ADDR+0x40);
-            write_reg_eval(dut, m_trace, CGRA_OUT1_SIZE_A, 0x4*16);
+            //write_reg_eval(dut, m_trace, CGRA_OUT1_ADDR_A, DATA_OUT_ADDR+0x40);
+            //write_reg_eval(dut, m_trace, CGRA_OUT1_SIZE_A, 0x8*16);
             
-            write_reg_eval(dut, m_trace, CGRA_OUT2_ADDR_A, DATA_OUT_ADDR+0x80);
-            write_reg_eval(dut, m_trace, CGRA_OUT2_SIZE_A, 0x4*16);
+            //write_reg_eval(dut, m_trace, CGRA_OUT2_ADDR_A, DATA_OUT_ADDR+0x80);
+            //write_reg_eval(dut, m_trace, CGRA_OUT2_SIZE_A, 0x8*16);
             
-            write_reg_eval(dut, m_trace, CGRA_OUT3_ADDR_A, DATA_OUT_ADDR+0x100);
-            write_reg_eval(dut, m_trace, CGRA_OUT3_SIZE_A, 0x4*16);
+            //write_reg_eval(dut, m_trace, CGRA_OUT3_ADDR_A, DATA_OUT_ADDR+0x100);
+            //write_reg_eval(dut, m_trace, CGRA_OUT3_SIZE_A, 0x8*16);
 
             write_reg_eval(dut, m_trace, CGRA_CTRL_A, CGRA_CTRL_BIT_START_EXEC);
         } 
@@ -209,13 +212,13 @@ int main(int argc, char** argv, char** env) {
     printf("\nMemory dump\n");
 
     printf("\nCONFIG MEM\n");
-    examine_mem(dut, CONFIG_ADDR, CONFIG_ADDR + 0x50);
+    examine_mem(dut, CONFIG_ADDR, CONFIG_ADDR + 0x100);
 
     printf("\nINPUT MEM\n");
-    examine_mem(dut, DATA_IN_ADDR, DATA_IN_ADDR + 0x50);
+    examine_mem(dut, DATA_IN_ADDR, DATA_IN_ADDR + 0x100);
 
     printf("\nOUTPUT MEM\n");
-    examine_mem(dut, DATA_OUT_ADDR, DATA_OUT_ADDR + 0x50);
+    examine_mem(dut, DATA_OUT_ADDR, DATA_OUT_ADDR + 0x100);
 
 
     m_trace->close();
