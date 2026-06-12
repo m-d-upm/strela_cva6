@@ -178,15 +178,16 @@ module axi_cgra_top #(
       .out           (aux_axi_master)
   );
 
+
   logic [31:0] data_input_addr  [ INPUT_NODES_NUM-1:0];
-  logic [15:0] data_input_size  [ INPUT_NODES_NUM-1:0];
-  logic [15:0] data_input_stride[ INPUT_NODES_NUM-1:0];
+  logic [31:0] data_input_size  [ INPUT_NODES_NUM-1:0];
+  logic [31:0] data_input_stride[ INPUT_NODES_NUM-1:0];
 
   logic [31:0] data_config_addr;
   logic [15:0] data_config_size;
 
   logic [31:0] data_output_addr [OUTPUT_NODES_NUM-1:0];
-  logic [15:0] data_output_size [OUTPUT_NODES_NUM-1:0];
+  logic [31:0] data_output_size [OUTPUT_NODES_NUM-1:0];
   logic done_exec, done_config;
   logic csr_execute_input_output;
   logic csr_load_config;
@@ -287,7 +288,7 @@ module axi_cgra_top #(
   ) i_dma_interface (
       .clk_i(clk_i),
       .rst_ni(!(!rst_ni | reset_state_machines)),
-      .axi_master_port(axi_lite_bus),
+      .axi_master_port(axi_master_port),
 
       // Execute
       .execute_input_i (control_execute_input),

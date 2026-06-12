@@ -56,24 +56,24 @@ uint32_t read_reg(Vsim_top *dut, uint32_t reg_addr)
 
 uint64_t read_ram(Vsim_top *dut, uint32_t ram_addr)
 {
-    return dut->sim_top->i_test_ram->ram_memory_contents[(ram_addr & 0xffff)/8];
+    return dut->sim_top->i_test_ram->ram_memory_contents[(ram_addr & 0xffff) / 8];
 }
 
 void write_ram(Vsim_top *dut, uint32_t ram_addr, uint64_t ram_data)
 {
-    dut->sim_top->i_test_ram->ram_memory_contents[(ram_addr & 0xffff)/8] = ram_data;
+    dut->sim_top->i_test_ram->ram_memory_contents[(ram_addr & 0xffff) / 8] = ram_data;
 }
 
 void examine_mem(Vsim_top *dut, uint32_t ram_addr1, uint32_t ram_addr2)
 {
-    for(int i=ram_addr1; i<ram_addr2; i+=8)
+    for(int i = ram_addr1; i < ram_addr2; i += 8)
     {
  
         uint32_t high = read_ram(dut, i) >> 32;
         uint32_t low  = read_ram(dut, i) & 0x00000000ffffffff;
 
         printf("%08x: %08x %08x\n", i, low, high);
-        if((i/8+1)%4 == 0)
+        if ((i / 8 + 1) % 4 == 0)
             printf("\n");
     }
 }
@@ -100,19 +100,19 @@ int main(int argc, char** argv, char** env) {
     uint32_t *cgra_kernel = relu_kernel;
     uint32_t cgra_kernel_size = RELU_SIZE;
 
-    for(int i=0; i<cgra_kernel_size; i+=2)
+    for (int i = 0; i < cgra_kernel_size; i += 2)
     {
-        write_ram(dut, CONFIG_ADDR + i*4, \
-                    ((uint64_t)cgra_kernel[i+1] << 32) | cgra_kernel[i]);
+        write_ram(dut, CONFIG_ADDR + i * 4, \
+                    ((uint64_t)cgra_kernel[i + 1] << 32) | cgra_kernel[i]);
     }
 
     // Setup Input data
-    for(int i = 0; i<16; i++)
+    for (int i = 0; i < 16; i++)
     {
         if(i % 2 == 0)
-            write_ram(dut, DATA_IN_ADDR + i*8, i);
+            write_ram(dut, DATA_IN_ADDR + i * 8, -1);
         else
-            write_ram(dut, DATA_IN_ADDR + i*8, -i);
+            write_ram(dut, DATA_IN_ADDR + i * 8, 1);
     }
     // write_ram(dut, DATA_IN_ADDR + 0x00, 1L << 32 | 2 );
     // write_ram(dut, DATA_IN_ADDR + 0x08, (uint64_t)(-2) << 32 | 4 );
@@ -164,20 +164,18 @@ int main(int argc, char** argv, char** env) {
             write_reg_eval(dut, m_trace, CGRA_OUT2_SIZE_A, 0);
             write_reg_eval(dut, m_trace, CGRA_OUT3_SIZE_A, 0);
 
-
             // Bypass
             write_reg_eval(dut, m_trace, CGRA_IN0_ADDR_A, DATA_IN_ADDR);
-            write_reg_eval(dut, m_trace, CGRA_IN0_SIZE_A, 0x8 << 16 | 0x8*16);
+            write_reg_eval(dut, m_trace, CGRA_IN0_SIZE_A, 0x8*16);
 
             //write_reg_eval(dut, m_trace, CGRA_IN1_ADDR_A, DATA_IN_ADDR);
-            //write_reg_eval(dut, m_trace, CGRA_IN1_SIZE_A, 0x8 << 16 | 0x8*16);
+            //write_reg_eval(dut, m_trace, CGRA_IN1_SIZE_A, 0x8*16);
 
             //write_reg_eval(dut, m_trace, CGRA_IN2_ADDR_A, DATA_IN_ADDR);
-            //write_reg_eval(dut, m_trace, CGRA_IN2_SIZE_A, 0x8 << 16 | 0x8*16);
+            //write_reg_eval(dut, m_trace, CGRA_IN2_SIZE_A, 0x8*16);
 
             //write_reg_eval(dut, m_trace, CGRA_IN3_ADDR_A, DATA_IN_ADDR);
-            //write_reg_eval(dut, m_trace, CGRA_IN3_SIZE_A, 0x8 << 16 | 0x8*16);
-
+            //write_reg_eval(dut, m_trace, CGRA_IN3_SIZE_A, 0x8*16);
 
             write_reg_eval(dut, m_trace, CGRA_OUT0_ADDR_A, DATA_OUT_ADDR);
             write_reg_eval(dut, m_trace, CGRA_OUT0_SIZE_A, 0x8*16);
@@ -190,6 +188,11 @@ int main(int argc, char** argv, char** env) {
             
             //write_reg_eval(dut, m_trace, CGRA_OUT3_ADDR_A, DATA_OUT_ADDR+0x100);
             //write_reg_eval(dut, m_trace, CGRA_OUT3_SIZE_A, 0x8*16);
+
+            write_reg_eval(dut, m_trace, CGRA_IN0_STRIDE_A, 8);
+            write_reg_eval(dut, m_trace, CGRA_IN1_STRIDE_A, 0);
+            write_reg_eval(dut, m_trace, CGRA_IN2_STRIDE_A, 0);
+            write_reg_eval(dut, m_trace, CGRA_IN3_STRIDE_A, 0);
 
             write_reg_eval(dut, m_trace, CGRA_CTRL_A, CGRA_CTRL_BIT_START_EXEC);
         } 

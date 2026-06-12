@@ -37,8 +37,8 @@ module dma_interface #(
     input   logic [INPUT_NODES_NUM-1:0] data_input_ready_i,
 
     input   logic [31:0] data_input_addr_i [INPUT_NODES_NUM-1:0],
-    input   logic [15:0] data_input_size_i [INPUT_NODES_NUM-1:0],
-    input   logic [15:0] data_input_stride_i [INPUT_NODES_NUM-1:0],
+    input   logic [31:0] data_input_size_i [INPUT_NODES_NUM-1:0],
+    input   logic [31:0] data_input_stride_i [INPUT_NODES_NUM-1:0],
 
     // CGRA config signals
     input   logic [31:0] data_config_addr_i,
@@ -52,7 +52,7 @@ module dma_interface #(
     output  logic [OUTPUT_NODES_NUM-1:0] data_output_ready_o,
 
     input   logic [31:0] data_output_addr_i [OUTPUT_NODES_NUM-1:0],
-    input   logic [15:0] data_output_size_i [OUTPUT_NODES_NUM-1:0],
+    input   logic [31:0] data_output_size_i [OUTPUT_NODES_NUM-1:0],
 
     output  logic data_output_done_o,
     input   logic output_arbiter_hold_i,
@@ -164,6 +164,7 @@ module dma_interface #(
             data_input_addr_offs_q <= '{default: '0};
             config_data_word_counter <= '0;
             config_columns_counter <= '0;
+            data_config_execute_q <= '0;
         end else begin
             data_input_execute_q <= data_input_execute_d;
             data_config_execute_q <= data_config_execute_d;
@@ -563,7 +564,7 @@ module dma_interface #(
 
         // Data and strobe for 64 bit write
         axi_master_port.w_data = axi_w_data_word;
-        axi_master_port.w_strb = 'hFF;
+        axi_master_port.w_strb = DATA_WIDTH == 32 ? 'hF : 'hFF;
 
         // Pop from appropriate FIFO when write data and pop outstanding
         if(axi_master_port.w_valid && axi_master_port.w_ready) begin

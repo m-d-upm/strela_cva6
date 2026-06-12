@@ -15,14 +15,14 @@ module dma_config_csr #(
 
     // To memory
     output logic [31:0] data_input_addr_o   [INPUT_NODES_NUM-1:0],
-    output logic [15:0] data_input_size_o   [INPUT_NODES_NUM-1:0],
-    output logic [15:0] data_input_stride_o [INPUT_NODES_NUM-1:0],
+    output logic [31:0] data_input_size_o   [INPUT_NODES_NUM-1:0],
+    output logic [31:0] data_input_stride_o [INPUT_NODES_NUM-1:0],
 
     output logic [31:0] data_config_addr_o,
-    output logic [15:0] data_config_size_o,
+    output logic [31:0] data_config_size_o,
 
     output logic [31:0] data_output_addr_o [OUTPUT_NODES_NUM-1:0],
-    output logic [15:0] data_output_size_o [OUTPUT_NODES_NUM-1:0],
+    output logic [31:0] data_output_size_o [OUTPUT_NODES_NUM-1:0],
 
     input  logic done_exec_output_i,
     input  logic done_config_i,
@@ -98,16 +98,16 @@ module dma_config_csr #(
 
       // Input
       8'h10: reg_read_data = data_input_addr_o[0];
-      8'h14: reg_read_data = {data_input_stride_o[0], data_input_size_o[0]};
+      8'h14: reg_read_data = data_input_size_o[0];
 
       8'h18: reg_read_data = data_input_addr_o[1];
-      8'h1C: reg_read_data = {data_input_stride_o[1], data_input_size_o[1]};
+      8'h1C: reg_read_data = data_input_size_o[1];
 
       8'h20: reg_read_data = data_input_addr_o[2];
-      8'h24: reg_read_data = {data_input_stride_o[2], data_input_size_o[2]};
+      8'h24: reg_read_data = data_input_size_o[2];
 
       8'h28: reg_read_data = data_input_addr_o[3];
-      8'h2C: reg_read_data = {data_input_stride_o[3], data_input_size_o[3]};
+      8'h2C: reg_read_data = data_input_size_o[3];
 
       // Output
       8'h50: reg_read_data = data_output_addr_o[0];
@@ -126,8 +126,14 @@ module dma_config_csr #(
       8'h90: reg_read_data = cycle_count_load_config_i;
       8'h94: reg_read_data = cycle_count_execute_i;
       8'h98: reg_read_data = cycle_count_stall_i;
-
+      
       8'hA0: reg_read_data = output_arbiter_hold_o;
+ 
+      // Input strides
+      8'hA4: reg_read_data = data_input_stride_o[0];
+      8'hA8: reg_read_data = data_input_stride_o[1];
+      8'hAC: reg_read_data = data_input_stride_o[2];
+      8'hB0: reg_read_data = data_input_stride_o[3];
 
       default: reg_read_data = '0;
     endcase
@@ -140,11 +146,11 @@ module dma_config_csr #(
       op_b <= '0;
 
       data_input_addr_o <= '{32'h0, 32'h0, 32'h0, 32'h0};
-      data_input_size_o <= '{16'h0, 16'h0, 16'h0, 16'h0};
-      data_input_stride_o <= '{16'h0, 16'h0, 16'h0, 16'h0};
+      data_input_size_o <= '{32'h0, 32'h0, 32'h0, 32'h0};
+      data_input_stride_o <= '{32'h0, 32'h0, 32'h0, 32'h0};
 
       data_output_addr_o <= '{32'h0, 32'h0, 32'h0, 32'h0};
-      data_output_size_o <= '{16'h0, 16'h0, 16'h0, 16'h0};
+      data_output_size_o <= '{32'h0, 32'h0, 32'h0, 32'h0};
 
       data_config_addr_o <= 32'h0;
       data_config_size_o <= 16'h0;
@@ -167,23 +173,22 @@ module dma_config_csr #(
           8'h00:
           {clear_interrupt_lines_o[1], clear_interrupt_lines_o[0], clear_cgra_config_o, load_configuration_o, clear_cgra_state_o, start_execution_o} <= reg_write_data[5:0];
 
-
           // Config:
           8'h04: data_config_addr_o <= reg_write_data;
           8'h08: data_config_size_o <= reg_write_data;
 
           // Input
           8'h10: data_input_addr_o[0] <= reg_write_data;
-          8'h14: {data_input_stride_o[0], data_input_size_o[0]} <= reg_write_data;
+          8'h14: data_input_size_o[0] <= reg_write_data;
 
           8'h18: data_input_addr_o[1] <= reg_write_data;
-          8'h1C: {data_input_stride_o[1], data_input_size_o[1]} <= reg_write_data;
+          8'h1C: data_input_size_o[1] <= reg_write_data;
 
           8'h20: data_input_addr_o[2] <= reg_write_data;
-          8'h24: {data_input_stride_o[2], data_input_size_o[2]} <= reg_write_data;
+          8'h24: data_input_size_o[2] <= reg_write_data;
 
           8'h28: data_input_addr_o[3] <= reg_write_data;
-          8'h2C: {data_input_stride_o[3], data_input_size_o[3]} <= reg_write_data;
+          8'h2C: data_input_size_o[3] <= reg_write_data;
 
           // Output
           8'h50: data_output_addr_o[0] <= reg_write_data;
@@ -201,7 +206,12 @@ module dma_config_csr #(
           // Output arbiter config
           8'hA0: output_arbiter_hold_o <= reg_write_data[0];
 
-
+          // Input strides
+          8'hA4: data_input_stride_o[0] <= reg_write_data;
+          8'hA8: data_input_stride_o[1] <= reg_write_data;
+          8'hAC: data_input_stride_o[2] <= reg_write_data;
+          8'hB0: data_input_stride_o[3] <= reg_write_data;
+    
         endcase
       end else begin
         start_execution_o <= 0;
