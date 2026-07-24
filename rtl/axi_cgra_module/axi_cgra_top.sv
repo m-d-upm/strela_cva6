@@ -19,8 +19,10 @@ module axi_cgra_top #(
     parameter int unsigned AXI_DATA_WIDTH      = -1,
     parameter int unsigned AXI_USER_WIDTH      = -1
 ) (
+    // clk and rst
     input logic clk_i,
     input logic rst_ni,
+    // STRELA DMA AXI MST
     output logic axi_awvalid,
     input logic axi_awready,
     output logic [AXI_ID_WIDTH_MASTER-1:0] axi_awid,
@@ -66,6 +68,7 @@ module axi_cgra_top #(
     output logic [AXI_USER_WIDTH-1:0] axi_aruser,
     input logic [AXI_USER_WIDTH-1:0] axi_buser,
     input logic [AXI_USER_WIDTH-1:0] axi_ruser,
+    // STRELA APB
     input logic apb_reg_bus_penable,
     input logic apb_reg_bus_pwrite,
     input logic [31:0] apb_reg_bus_paddr,
@@ -74,6 +77,7 @@ module axi_cgra_top #(
     output logic [31:0] apb_reg_bus_prdata,
     output logic apb_reg_bus_pready,
     output logic apb_reg_bus_pslverr,
+    // STRELA IRQ
     output logic[1:0]  int_lines, // two - one to signal exec done index [1], other to signal config loading done index [0]
     output logic int_line_shared // shared IRQ, combined int_lines from above, ok to be shared since config and exec operations should be executed sequentially
 );
@@ -107,7 +111,6 @@ module axi_cgra_top #(
   assign axi_awregion     = aux_axi_master.aw_region;
   assign axi_awvalid      = aux_axi_master.aw_valid;
   assign axi_awuser       = aux_axi_master.aw_user;
-
   assign aux_axi_master.aw_ready = axi_awready;
   //    W
   assign axi_wdata        = aux_axi_master.w_data;
@@ -122,7 +125,6 @@ module axi_cgra_top #(
   assign aux_axi_master.b_valid  = axi_bvalid;
   assign aux_axi_master.b_user  = axi_buser;
   assign axi_bready       = aux_axi_master.b_ready;
-
   //    AR
   assign axi_arid         = aux_axi_master.ar_id;
   assign axi_araddr       = aux_axi_master.ar_addr;
@@ -145,7 +147,7 @@ module axi_cgra_top #(
   assign aux_axi_master.r_valid  = axi_rvalid;
   assign aux_axi_master.r_user = axi_ruser;
   assign axi_rready       = aux_axi_master.r_ready;
-
+ 
   AXI_LITE #(
       .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
       .AXI_DATA_WIDTH(AXI_DATA_WIDTH)
@@ -184,7 +186,7 @@ module axi_cgra_top #(
   logic [31:0] data_input_stride[ INPUT_NODES_NUM-1:0];
 
   logic [31:0] data_config_addr;
-  logic [15:0] data_config_size;
+  logic [31:0] data_config_size;
 
   logic [31:0] data_output_addr [OUTPUT_NODES_NUM-1:0];
   logic [31:0] data_output_size [OUTPUT_NODES_NUM-1:0];
@@ -288,7 +290,7 @@ module axi_cgra_top #(
   ) i_dma_interface (
       .clk_i(clk_i),
       .rst_ni(!(!rst_ni | reset_state_machines)),
-      .axi_master_port(axi_master_port),
+      .axi_master_port(axi_lite_bus),
 
       // Execute
       .execute_input_i (control_execute_input),

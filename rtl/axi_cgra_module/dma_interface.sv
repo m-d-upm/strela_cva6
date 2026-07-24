@@ -42,7 +42,7 @@ module dma_interface #(
 
     // CGRA config signals
     input   logic [31:0] data_config_addr_i,
-    input   logic [15:0] data_config_size_i,
+    input   logic [31:0] data_config_size_i,
 
     output  logic data_config_done_o,
 
@@ -125,11 +125,11 @@ module dma_interface #(
     // Input data FIFOs
     logic [$clog2(INPUT_FIFO_DEPTH)-1:0] data_input_fifo_count [INPUT_NODES_NUM-1:0];
 
-    logic [DATA_WIDTH:0] data_input_fifo_in [INPUT_NODES_NUM-1:0];
+    logic [DATA_WIDTH-1:0] data_input_fifo_in [INPUT_NODES_NUM-1:0];
     logic [INPUT_NODES_NUM-1:0] data_input_fifo_push;
     logic [INPUT_NODES_NUM-1:0] data_input_fifo_full;
 
-    logic [DATA_WIDTH:0] data_input_fifo_out [INPUT_NODES_NUM-1:0];
+    logic [DATA_WIDTH-1:0] data_input_fifo_out [INPUT_NODES_NUM-1:0];
     logic [INPUT_NODES_NUM-1:0] data_input_fifo_pop;
     logic [INPUT_NODES_NUM-1:0] data_input_fifo_empty;
 
@@ -427,11 +427,11 @@ module dma_interface #(
     // Output data FIFOs
     logic [$clog2(OUTPUT_FIFO_DEPTH)-1:0] data_output_fifo_count [OUTPUT_NODES_NUM-1:0];
 
-    logic [DATA_WIDTH:0] data_output_fifo_in [OUTPUT_NODES_NUM-1:0];
+    logic [DATA_WIDTH-1:0] data_output_fifo_in [OUTPUT_NODES_NUM-1:0];
     logic [OUTPUT_NODES_NUM-1:0] data_output_fifo_push;
     logic [OUTPUT_NODES_NUM-1:0] data_output_fifo_full;
 
-    logic [DATA_WIDTH:0] data_output_fifo_out [INPUT_NODES_NUM-1:0];
+    logic [DATA_WIDTH-1:0] data_output_fifo_out [INPUT_NODES_NUM-1:0];
     logic [OUTPUT_NODES_NUM-1:0] data_output_fifo_pop;
     logic [OUTPUT_NODES_NUM-1:0] data_output_fifo_empty;
 
